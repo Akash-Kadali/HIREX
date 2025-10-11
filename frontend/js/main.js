@@ -1,6 +1,7 @@
 /* ============================================================
-   HIREX • main.js (LaTeX-only version, with debug beacons)
+   HIREX • main.js (LaTeX-only version, with extended timeout)
    Handles resume upload, JD submission, and backend optimization API call.
+   Optimized for long-running AI/Humanize operations (up to 3 minutes).
    Author: Sri Akash Kadali
    ============================================================ */
 
@@ -45,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       localStorage.setItem("hirex_tex", data.tex_string || "");
       localStorage.setItem("hirex_timestamp", Date.now().toString());
-      console.log("%c[HIREX] Saved optimized LaTeX to localStorage ✅", "color: #6a4fff");
+      console.log("%c[HIREX] Saved optimized LaTeX to localStorage ✅", "color:#6a4fff");
     } catch (err) {
       console.error("[HIREX] Failed to persist results:", err);
       showToast("⚠️ Unable to cache output in browser.");
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     disableForm(true);
-    showToast("⏳ Optimizing your resume...");
+    showToast("⏳ Optimizing your resume... (may take 2–3 minutes)");
     HIREX?.debugLog?.("FORM VALID", {
       file: resumeFile.name,
       jdLen: jdText.length,
@@ -85,9 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("jd_text", jdText);
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60000); // 60s safeguard
+      const timeout = setTimeout(() => controller.abort(), 180000); // ⏰ 3 min timeout
 
-      HIREX?.debugLog?.("FETCH /api/optimize → start");
+      HIREX?.debugLog?.("FETCH /api/optimize → start", {
+        apiBase: API_BASE,
+        timeoutMs: 180000,
+      });
 
       const response = await fetch(`${API_BASE}/api/optimize`, {
         method: "POST",
@@ -133,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       HIREX?.debugLog?.("FORM ERROR", { msg: err.message, name: err.name });
       if (err.name === "AbortError") {
-        showToast("⚠️ Request timed out. Please try again.");
+        showToast("⚠️ Request timed out. The optimization took longer than expected.");
       } else if (err.name === "TypeError") {
         showToast("🌐 Network error. Check backend connection.");
       } else {
@@ -192,10 +196,11 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ============================================================
      ✅ Initialization Log
      ============================================================ */
-  console.log("%c[HIREX] main.js (LaTeX-only) initialized.", "color:#4f8cff;font-weight:bold;");
+  console.log("%c[HIREX] main.js initialized (extended timeout mode).", "color:#4f8cff;font-weight:bold;");
   HIREX?.debugLog?.("MAIN INIT COMPLETE", {
     api: API_BASE,
     hasForm: !!form,
     origin: window.location.origin,
+    timeoutMs: 180000,
   });
 });

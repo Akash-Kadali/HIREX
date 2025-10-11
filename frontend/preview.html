@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================= META ========================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0a1020" />
+
+  <!-- ========================= SEO ========================= -->
+  <title>Preview | HIREX — Optimized Resume Viewer</title>
+  <meta name="description" content="Preview and download your AI-optimized LaTeX resume with ATS-safe formatting powered by HIREX AI." />
+  <meta name="keywords" content="resume optimizer, LaTeX resume, job aware, AI resume preview, ATS resume generator, HIREX" />
+  <meta name="author" content="Sri Akash Kadali" />
+  <link rel="canonical" href="https://your-domain.com/preview.html" />
+
+  <!-- ========================= ICONS ========================= -->
+  <link rel="icon" type="image/png" href="/static/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/static/assets/favicon.png" />
+
+  <!-- ========================= PRELOADS ========================= -->
+  <link rel="preload" href="/static/assets/logo.png" as="image" />
+  <link rel="preload" href="/static/css/app.css" as="style" />
+
+  <!-- ========================= FONTS ========================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- ========================= STYLES ========================= -->
+  <link rel="stylesheet" href="/static/css/app.css?v=1.0.0" />
+
+  <!-- ========================= INLINE STYLES ========================= -->
+  <style>
+    :root {
+      --sidebar-width: 220px;
+      --surface-1: rgba(255,255,255,0.06);
+      --surface-2: rgba(255,255,255,0.12);
+      --text-muted: #c0cadb;
+      --brand-bg: #0a1020;
+      --fade-duration: 0.8s;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background: var(--brand-bg);
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    header.appbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: saturate(140%) blur(10px);
+      border-bottom: 1px solid var(--surface-2);
+      animation: fadeInDown var(--fade-duration) ease both;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: calc(100vh - 56px);
+    }
+
+    aside.sidebar {
+      border-right: 1px solid var(--surface-2);
+      padding: 1rem 0.75rem;
+      background: rgba(255,255,255,0.02);
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+    }
+
+    .vnav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .vnav a {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.6rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: background 0.2s ease;
+    }
+    .vnav a:hover { background: rgba(255,255,255,0.08); }
+    .vnav a[aria-current="page"] { background: var(--surface-1); }
+
+    main.console {
+      padding: 1.25rem;
+      overflow-y: auto;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--surface-1);
+      border: 1px solid var(--surface-2);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      transform: translateY(40px);
+      opacity: 0;
+      transition: transform var(--fade-duration) ease-out, opacity var(--fade-duration) ease-out;
+    }
+    .card.is-animated { transform: translateY(0); opacity: 1; }
+
+    pre {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      overflow: auto;
+      font-family: "Fira Code", monospace;
+      font-size: 0.9rem;
+      color: #ffffff;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+    .cta-primary {
+      background: linear-gradient(135deg,#4f8cff,#6a4fff);
+      color:#fff;
+      box-shadow:0 3px 8px rgba(79,140,255,0.3);
+    }
+    .cta-primary:hover {
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(79,140,255,0.45);
+    }
+    .cta-secondary {
+      background:rgba(255,255,255,0.1);
+      color:#fff;
+    }
+
+    footer {
+      padding:1rem;
+      text-align:center;
+      color:var(--text-muted);
+      border-top:1px solid var(--surface-2);
+      font-size:0.85rem;
+      animation: fadeInUp var(--fade-duration) ease both;
+      animation-delay: 0.5s;
+    }
+
+    .toast {
+      position:fixed;
+      bottom:1.25rem;
+      right:1.25rem;
+      background:#1a1f35;
+      color:white;
+      padding:0.75rem 1rem;
+      border-radius:8px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.25);
+      display:none;
+      z-index:999;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity:0; transform:translateY(-10px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    @media(max-width:768px){
+      .layout{ grid-template-columns:1fr; }
+      aside.sidebar{ display:none; }
+      main.console{ padding:1rem; }
+    }
+  </style>
+</head>
+
+<body data-app="hirex">
+  <a href="#content" class="sr-only">Skip to content</a>
+
+  <!-- ========================= HEADER ========================= -->
+  <header class="appbar" role="banner">
+    <a href="/index.html" class="brand">
+      <img src="/static/assets/logo.png" alt="HIREX Logo" width="48" height="48" />
+      <span>HIREX</span>
+    </a>
+    <span style="flex:1"></span>
+    <div class="top-actions muted">Optimized Resume Preview</div>
+  </header>
+
+  <div class="layout">
+    <!-- ========================= SIDEBAR ========================= -->
+    <aside class="sidebar" role="navigation" aria-label="Main Navigation">
+      <h4 class="muted" style="font-size:.8rem;text-transform:uppercase;margin:.5rem 0;">Navigation</h4>
+      <ul class="vnav">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/preview.html" aria-current="page">Preview</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/help.html">Help</a></li>
+      </ul>
+    </aside>
+
+    <!-- ========================= MAIN ========================= -->
+    <main id="content" class="console" role="main">
+      <section class="card anim">
+        <h1>Optimized LaTeX Output</h1>
+        <p class="muted">
+          Review your AI-optimized LaTeX code generated by HIREX.<br />
+          Copy, tweak, or download it directly for Overleaf or manual compilation.
+        </p>
+      </section>
+
+      <section class="card anim">
+        <h2>Final LaTeX Code</h2>
+        <pre id="tex-output">% Your optimized LaTeX will appear here...</pre>
+        <div style="margin-top:1rem;display:flex;gap:.8rem;flex-wrap:wrap;">
+          <button id="download-tex" class="cta-primary">Download .tex</button>
+        </div>
+      </section>
+
+      <section class="card anim muted">
+        <p>💡 Tip: You can copy this LaTeX and paste it directly into Overleaf for quick preview and edits.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================= TOAST ========================= -->
+  <div id="toast" class="toast" role="status" aria-live="polite">Ready.</div>
+
+  <!-- ========================= FOOTER ========================= -->
+  <footer role="contentinfo" class="anim">
+    <p>&copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong></p>
+    <p class="muted">
+      Build v1.0.0 |
+      <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
+    </p>
+  </footer>
+
+  <!-- ========================= SCRIPTS ========================= -->
+  <script src="/static/js/util.js" defer></script>
+  <script src="/static/js/ui.js" defer></script>
+  <script src="/static/js/preview.js" defer></script>
+
+  <!-- ========================= AUTO FIX VISIBILITY ========================= -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Ensure all cards are visible
+      document.querySelectorAll(".card").forEach(c => c.classList.add("is-animated"));
+
+      // Force visible text color in case of dark blending
+      const texOutput = document.getElementById("tex-output");
+      if (texOutput) {
+        texOutput.style.color = "#fff";
+        texOutput.style.whiteSpace = "pre-wrap";
+        texOutput.style.lineHeight = "1.55";
+      }
+    });
+  </script>
+</body>
+</html>

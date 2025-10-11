@@ -1,0 +1,23 @@
+[
+  {
+    "item": "docker",
+    "status": "hit",
+    "matched_in": [
+      "skills",
+      "experience[0].bullets[1]"
+    ]
+  },
+  {
+    "item": "fastapi",
+    "status": "miss",
+    "matched_in": []
+  },
+  {
+    "item": "python",
+    "status": "hit",
+    "matched_in": [
+      "skills",
+      "experience[0].bullets[0]"
+    ]
+  }
+]

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================= META ========================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0a1020" />
+
+  <!-- ========================= SEO ========================= -->
+  <title>About | HIREX — AI Resume Optimizer</title>
+  <meta name="description" content="Learn more about HIREX — an AI-powered LaTeX resume optimizer that transforms job descriptions and LaTeX resumes into ATS-safe, job-aware documents." />
+  <meta name="keywords" content="resume optimizer, LaTeX, FastAPI, AI resume, ATS, job aware resume, HIREX" />
+  <meta name="author" content="Sri Akash Kadali" />
+  <link rel="canonical" href="https://your-domain.com/about.html" />
+
+  <!-- ========================= SOCIAL META ========================= -->
+  <meta property="og:title" content="HIREX — AI Resume Optimizer" />
+  <meta property="og:description" content="HIREX optimizes LaTeX resumes using AI for job alignment, tone, and ATS compliance." />
+  <meta property="og:image" content="/static/assets/og-banner.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://your-domain.com/about.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- ========================= ICONS ========================= -->
+  <link rel="icon" type="image/png" href="/static/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/static/assets/favicon.png" />
+
+  <!-- ========================= PRELOADS ========================= -->
+  <link rel="preload" href="/static/assets/logo.png" as="image" />
+  <link rel="preload" href="/static/css/app.css" as="style" />
+
+  <!-- ========================= FONTS ========================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- ========================= STYLES ========================= -->
+  <link rel="stylesheet" href="/static/css/app.css?v=1.0.0" />
+
+  <!-- ========================= STRUCTURED DATA ========================= -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "HIREX",
+    "applicationCategory": "Productivity",
+    "operatingSystem": "Web",
+    "creator": {
+      "@type": "Person",
+      "name": "Sri Akash Kadali",
+      "affiliation": "University of Maryland, College Park"
+    },
+    "description": "AI-powered LaTeX resume optimizer for job-aware, ATS-compliant output.",
+    "url": "https://your-domain.com"
+  }
+  </script>
+
+  <!-- ========================= INLINE STYLES ========================= -->
+  <style>
+    :root {
+      --sidebar-width: 220px;
+      --surface-1: rgba(255, 255, 255, 0.06);
+      --surface-2: rgba(255, 255, 255, 0.12);
+      --text-muted: #c0cadb;
+      --brand-bg: #0a1020;
+      --fade-duration: 0.8s;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background: var(--brand-bg);
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    header.appbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: saturate(140%) blur(10px);
+      border-bottom: 1px solid var(--surface-2);
+      animation: fadeInDown var(--fade-duration) ease both;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: calc(100vh - 56px);
+    }
+
+    aside.sidebar {
+      border-right: 1px solid var(--surface-2);
+      padding: 1rem 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+    }
+
+    .vnav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .vnav a {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.6rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .vnav a:hover { background: rgba(255, 255, 255, 0.08); }
+    .vnav a[aria-current="page"] { background: var(--surface-1); }
+
+    main.console {
+      padding: 1.25rem;
+      overflow-y: auto;
+      max-width: 1024px;
+      margin: 0 auto;
+    }
+
+    /* --- Animated Cards --- */
+    .card {
+      background: var(--surface-1);
+      border: 1px solid var(--surface-2);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+      transform: translateY(40px);
+      opacity: 0;
+      transition: transform var(--fade-duration) ease-out, opacity var(--fade-duration) ease-out;
+    }
+
+    .card.is-animated { transform: translateY(0); opacity: 1; }
+
+    h1, h2, h3 { margin: 0 0 0.75rem; }
+    p, li { line-height: 1.6; }
+
+    ul, ol { margin: 0.5rem 0 1rem 1.25rem; padding: 0; }
+
+    .muted { color: var(--text-muted); }
+
+    footer {
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      border-top: 1px solid var(--surface-2);
+      font-size: 0.85rem;
+      animation: fadeInUp var(--fade-duration) ease both;
+      animation-delay: 0.5s;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      aside.sidebar { display: none; }
+      main.console { padding: 1rem; }
+    }
+
+    @media (prefers-color-scheme: light) {
+      body { background: #0a1020; color: #fff; }
+      .card { background: rgba(255, 255, 255, 0.06); color: #fff; }
+      .vnav a { color: #fff; }
+      .vnav a[aria-current="page"] { background: rgba(255, 255, 255, 0.1); }
+    }
+  </style>
+</head>
+
+<body data-app="hirex">
+  <a href="#content" class="sr-only">Skip to content</a>
+
+  <!-- ========================= HEADER ========================= -->
+  <header class="appbar" role="banner">
+    <a href="/index.html" class="brand">
+      <img src="/static/assets/logo.png" alt="HIREX Logo" width="48" height="48" />
+      <span>HIREX</span>
+    </a>
+    <span style="flex:1"></span>
+    <div class="top-actions muted">About This Project</div>
+  </header>
+
+  <div class="layout">
+    <!-- ========================= SIDEBAR ========================= -->
+    <aside class="sidebar" role="navigation" aria-label="Main Navigation">
+      <h4 class="muted" style="font-size:.8rem;text-transform:uppercase;margin:.5rem 0;">Navigation</h4>
+      <ul class="vnav">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/preview.html">Preview</a></li>
+        <li><a href="/about.html" aria-current="page">About</a></li>
+        <li><a href="/help.html">Help</a></li>
+      </ul>
+    </aside>
+
+    <!-- ========================= MAIN ========================= -->
+    <main id="content" class="console" role="main">
+      <section class="card anim">
+        <h1>About HIREX</h1>
+        <p class="muted">High Resume eXpert — a Job-Aware Resume Optimizer for LaTeX Professionals.</p>
+      </section>
+
+      <section class="card anim">
+        <h2>Project Overview</h2>
+        <p>
+          HIREX intelligently transforms your <strong>LaTeX resume</strong> into a job-specific, ATS-optimized document
+          using OpenAI and Humanize APIs. It ensures factual accuracy, measurable impact, and clarity without changing
+          company names or durations.
+        </p>
+        <ul>
+          <li>🔍 Extracts critical JD keywords and aligns resume sections accordingly.</li>
+          <li>🤖 Enhances bullet tone and clarity using AI-driven rewriting while keeping facts intact.</li>
+          <li>🧩 Maintains Education, Skills, and Project integrity from the base resume.</li>
+          <li>📄 Produces downloadable <code>.tex</code> and <code>.pdf</code> outputs seamlessly.</li>
+        </ul>
+      </section>
+
+      <section class="card anim">
+        <h2>Architecture</h2>
+        <ol>
+          <li><strong>Frontend:</strong> Responsive HTML/JS interface for uploading, processing, and previewing resumes.</li>
+          <li><strong>Backend:</strong> FastAPI-powered microservice handling sanitization, AI optimization, and LaTeX rendering.</li>
+          <li><strong>LLM Layer:</strong> OpenAI GPT + Humanize.io for tone correction and content relevance enhancement.</li>
+        </ol>
+      </section>
+
+      <section class="card anim">
+        <h2>Credits</h2>
+        <ul>
+          <li>👨‍💻 <strong>Developer:</strong> Sri Akash Kadali</li>
+          <li>🏫 <strong>Institution:</strong> University of Maryland, College Park</li>
+          <li>🧠 <strong>Concept:</strong> Job-aware resume optimization inspired by modern ATS systems.</li>
+          <li>⚙️ <strong>Stack:</strong> FastAPI · Python · LaTeX · Humanize API · HTML · JS · CSS</li>
+        </ul>
+      </section>
+
+      <section class="card anim">
+        <h2>License</h2>
+        <p>
+          HIREX is released under the <strong>MIT License</strong>.
+          You are free to use, modify, and distribute it for personal, research, or open-source purposes.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================= FOOTER ========================= -->
+  <footer role="contentinfo" class="anim">
+    <p>&copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong> | Powered by FastAPI + LaTeX</p>
+    <p class="muted">
+      Build v1.0.0 |
+      <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
+    </p>
+  </footer>
+
+  <!-- ========================= SCRIPTS ========================= -->
+  <script src="/static/js/ui.js" defer></script>
+</body>
+</html>

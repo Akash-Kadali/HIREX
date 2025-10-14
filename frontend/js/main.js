@@ -3,6 +3,7 @@
    Handles resume upload, JD submission, and backend optimization API call.
    Automatically extracts Company & Role from JD via backend OpenAI call.
    Stores both Original and Humanized PDFs if available.
+   Also persists JD Fit Score (0–100) and round history from the 2nd GPT loop.
    Author: Sri Akash Kadali
    ============================================================ */
 
@@ -45,6 +46,17 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("hirex_company", data.company_name || "UnknownCompany");
       localStorage.setItem("hirex_role", data.role || "UnknownRole");
       localStorage.setItem("hirex_use_humanize", useHumanize ? "true" : "false");
+      if (Array.isArray(data.saved_paths)) {
+        localStorage.setItem("hirex_saved_paths", JSON.stringify(data.saved_paths));
+      }
+
+      // 🔢 Persist 2nd-loop scoring
+      if (typeof data.rating_score === "number") {
+        localStorage.setItem("hirex_rating_score", String(data.rating_score));
+      }
+      if (Array.isArray(data.rating_history)) {
+        localStorage.setItem("hirex_rating_history", JSON.stringify(data.rating_history));
+      }
 
       console.log("%c[HIREX] Cached optimization results ✅", "color:#6a4fff");
       console.table({
@@ -52,6 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
         Role: data.role,
         "Has PDF": !!data.pdf_base64,
         "Has Humanized": !!data.pdf_base64_humanized,
+        "JD Fit Score": data.rating_score ?? "n/a",
+        "Rounds": Array.isArray(data.rating_history) ? data.rating_history.length : "n/a",
       });
     } catch (e) {
       console.error("[HIREX] Cache error:", e);
@@ -100,7 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const company = data.company_name || "Company";
       const role = data.role || "Role";
-      showToast(`✅ Optimized for ${company} (${role})! Opening preview...`);
+      const score = typeof data.rating_score === "number" ? `${data.rating_score}/100` : "n/a";
+      showToast(`✅ Optimized for ${company} (${role}) — JD Fit: ${score}. Opening preview...`);
       setTimeout(() => (window.location.href = "/preview.html"), 1500);
     } catch (err) {
       console.error("[HIREX] Error:", err);
@@ -123,6 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "hirex_use_humanize",
       "hirex_pdf",
       "hirex_pdf_humanized",
+      "hirex_saved_paths",
+      "hirex_rating_score",
+      "hirex_rating_history",
     ].forEach((k) => localStorage.removeItem(k));
     showToast("🧹 Form cleared.");
   });
@@ -155,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
      ✅ Init Log
      ============================================================ */
   console.log(
-    "%c[HIREX] main.js initialized (Auto Company/Role + Dual PDF + Humanize ready)",
+    "%c[HIREX] main.js initialized (Auto Company/Role + Dual PDF + Humanize + JD Fit Score)",
     "color:#4f8cff;font-weight:bold;"
   );
 });

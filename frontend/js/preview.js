@@ -1,6 +1,7 @@
 /* ============================================================
    HIREX • preview.js (Final LaTeX + PDF Viewer)
    Displays optimized LaTeX output and both original + humanized PDFs.
+   Shows JD Fit Score from 2nd GPT loop (if present).
    Allows copy, download, and inline PDF preview.
    Author: Sri Akash Kadali
    ============================================================ */
@@ -10,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const btnDownloadTex = document.getElementById("download-tex");
   const pdfContainer = document.getElementById("pdf-container");
+  const pageContent = document.getElementById("content") || document.body;
 
   /* ============================================================
      🧠 Toast Utility
@@ -35,6 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const role = (localStorage.getItem("hirex_role") || "Role").replace(/\s+/g, "_");
   const texLen = texString.length;
 
+  // 2nd Loop scoring (if present)
+  const ratingScoreRaw = localStorage.getItem("hirex_rating_score") || "";
+  const ratingHistoryRaw = localStorage.getItem("hirex_rating_history") || "[]";
+  let ratingScore = parseInt(ratingScoreRaw || "0", 10);
+  let ratingRounds = 0;
+  try { ratingRounds = JSON.parse(ratingHistoryRaw)?.length || 0; } catch {}
+
   HIREX?.debugLog?.("PREVIEW INIT", {
     hasTex: !!texString.trim(),
     hasPdf: !!pdfB64,
@@ -42,7 +51,24 @@ document.addEventListener("DOMContentLoaded", () => {
     texLen,
     company,
     role,
+    ratingScore,
+    ratingRounds,
   });
+
+  /* ============================================================
+     🎯 JD Fit Score Card (if available)
+     ============================================================ */
+  if (!Number.isNaN(ratingScore) && ratingScore > 0) {
+    const scoreCard = document.createElement("section");
+    scoreCard.className = "card";
+    scoreCard.style.marginBottom = "1rem";
+    scoreCard.innerHTML = `
+      <h2>🎯 JD Fit Score</h2>
+      <p class="muted">Optimized in ${ratingRounds || 1} round(s)</p>
+      <p style="font-size:2.25rem;margin:.25rem 0;font-weight:800;">${ratingScore}/100</p>
+    `;
+    pageContent.prepend(scoreCard);
+  }
 
   /* ============================================================
      📄 Render LaTeX
@@ -125,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let pdfHtml = "";
   if (pdfB64) pdfHtml += renderPDFSection("Original Optimized Resume", pdfB64, "");
   if (pdfB64Humanized)
-    pdfHtml += renderPDFSection("Humanized Resume", pdfB64Humanized, "_");
+    pdfHtml += renderPDFSection("Humanized Resume", pdfB64Humanized, "_Humanized");
 
   if (!pdfHtml)
     pdfHtml = "<p class='muted'>⚠️ No PDF available. Please run optimization first.</p>";
@@ -140,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then((r) => r.blob())
         .then((blob) => {
           HIREX.downloadFile(filename, blob, "application/pdf");
-          showToast(`⬇️ Downloading ${filename.includes("_") ? "Humanized" : "Original"} Resume...`);
+          showToast(`⬇️ Downloading ${filename.includes("Humanized") ? "Humanized" : "Original"} Resume...`);
           setTimeout(() => URL.revokeObjectURL(url), 1500);
         })
         .catch((err) => {
@@ -154,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
      ✅ Initialization Log
      ============================================================ */
   console.log(
-    "%c[HIREX] preview.js (Final Viewer with Dual PDF + Humanize Support) initialized.",
+    "%c[HIREX] preview.js (Final Viewer with Dual PDF + Humanize + JD Fit Score) initialized.",
     "color:#4f8cff;font-weight:bold;"
   );
 
@@ -165,5 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hasPdfHumanized: !!pdfB64Humanized,
     company,
     role,
+    ratingScore,
+    ratingRounds,
   });
 });

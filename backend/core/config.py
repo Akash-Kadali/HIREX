@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env if present
 load_dotenv()
 
+
 # ------------------------------------------------------------
 # Directory Structure
 # ------------------------------------------------------------
@@ -27,9 +28,10 @@ DATA_DIR = BASE_DIR / "data"
 CACHE_DIR = DATA_DIR / "cache"
 TEMP_LATEX_DIR = CACHE_DIR / "latex_builds"
 TEMPLATE_DIR = BACKEND_DIR / "templates"
+OUTPUT_DIR = DATA_DIR / "output"  # 📁 Final compiled resumes saved here
 
 # Ensure required directories exist
-for d in [DATA_DIR, CACHE_DIR, TEMP_LATEX_DIR, TEMPLATE_DIR]:
+for d in [DATA_DIR, CACHE_DIR, TEMP_LATEX_DIR, TEMPLATE_DIR, OUTPUT_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 
@@ -74,6 +76,11 @@ def get_tex_build_path(filename: str) -> Path:
     return TEMP_LATEX_DIR / filename
 
 
+def get_output_pdf_path(filename: str) -> Path:
+    """Return absolute path for saving final compiled resume PDFs."""
+    return OUTPUT_DIR / filename
+
+
 # ============================================================
 # 🧪 Local Test
 # ============================================================
@@ -85,5 +92,6 @@ if __name__ == "__main__":
     print(f"DEBUG_MODE      : {DEBUG_MODE}")
     print(f"MAX_UPLOAD_MB   : {MAX_UPLOAD_MB}")
     print(f"TEMP_LATEX_DIR  : {TEMP_LATEX_DIR}")
+    print(f"OUTPUT_DIR      : {OUTPUT_DIR}")
     print(f"OPENAI_API_KEY  : {'set' if OPENAI_API_KEY else 'missing'}")
     print(f"HUMANIZE_API_KEY: {'set' if HUMANIZE_API_KEY else 'missing'}")

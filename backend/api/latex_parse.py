@@ -18,7 +18,10 @@ def extract_section(tex: str, section_name: str) -> str:
     Extracts raw LaTeX section content between \section{<section_name>}
     or equivalent text headers. No stripping or cleanup is applied.
     """
-    pattern = rf"(?:\\section\{{{re.escape(section_name)}\}}|^{section_name}\s*$)(.*?)(?=\\section|\n[A-Z][A-Za-z ]+\n|$)"
+    pattern = (
+        rf"(?:\\section\{{{re.escape(section_name)}\}}"
+        rf"|^{section_name}\s*$)(.*?)(?=\\section|\n[A-Z][A-Za-z ]+\n|$)"
+    )
     match = re.search(pattern, tex, flags=re.DOTALL | re.IGNORECASE | re.MULTILINE)
     return match.group(1) if match else ""
 
@@ -80,7 +83,8 @@ def _parse_experience(section: str) -> List[Dict]:
 
     # LaTeX pattern: company/title/date + itemize block
     pattern = re.compile(
-        r"\\textbf\{(.*?)\}\s*\\hfill\s*\\textit\{(.*?)\}\s*(?:\\hfill\s*([^\n]+))?(.*?)\\end\{itemize\}",
+        r"\\textbf\{(.*?)\}\s*\\hfill\s*\\textit\{(.*?)\}\s*"
+        r"(?:\\hfill\s*([^\n]+))?(.*?)\\end\{itemize\}",
         flags=re.DOTALL,
     )
     matches = re.findall(pattern, section)

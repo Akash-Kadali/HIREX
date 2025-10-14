@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       toast.textContent = msg;
-      toast.classList.add("show");
       toast.style.display = "block";
+      toast.style.opacity = "1";
       setTimeout(() => {
-        toast.classList.remove("show");
+        toast.style.opacity = "0";
         setTimeout(() => (toast.style.display = "none"), 350);
       }, duration);
     },
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ).padStart(2, "0")}`;
     },
 
-    /* ---------- Debug Logger (FE → BE) ---------- */
+    /* ---------- Debug Logger (Frontend → Backend) ---------- */
     debugLog: async (msg, data = {}) => {
       try {
         const payload = {
@@ -61,25 +61,21 @@ document.addEventListener("DOMContentLoaded", () => {
           origin: window.location.origin,
         };
 
-        // Console mirror (always logs locally)
         console.log("%c🟦 [HIREX DEBUG]", "color:#6a4fff;font-weight:bold;", msg, data);
 
-        // Auto-detect FastAPI base or packaged Webview app
         const base =
           window.location.hostname === "127.0.0.1" ||
           window.location.hostname === "localhost"
             ? "http://127.0.0.1:8000"
             : window.location.origin;
 
-        // POST to backend logger
         await fetch(`${base}/api/debug/log`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } catch (err) {
-        // Non-fatal — prevents spam errors on missing API
-        console.warn("[HIREX DEBUG] Failed to send log:", err.message);
+        console.warn("[HIREX DEBUG] Log send failed:", err.message);
       }
     },
   });
@@ -88,14 +84,13 @@ document.addEventListener("DOMContentLoaded", () => {
      ✨ INTERSECTION OBSERVER (Scroll Animations)
      ============================================================ */
   const animatedElems = document.querySelectorAll("[data-anim], .anim");
-  if (animatedElems.length > 0) {
+  if (animatedElems.length) {
     const revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry, i) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-animated");
             entry.target.style.transition = `opacity 0.6s ease-out ${i * 0.08}s, transform 0.6s ease-out ${i * 0.08}s`;
-            entry.target.style.willChange = "opacity, transform";
             revealObserver.unobserve(entry.target);
           }
         });

@@ -10,60 +10,23 @@
   <!-- ========================= SEO ========================= -->
   <title>HIREX — High Resume eXpert</title>
   <meta name="description" content="HIREX is an AI-powered LaTeX resume optimizer that transforms your resume and job description into a job-aligned, ATS-safe format." />
-  <meta name="keywords" content="AI resume optimizer, LaTeX resume, job-aware resume builder, FastAPI resume engine, ATS optimizer, resume AI" />
+  <meta name="keywords" content="HIREX, resume optimizer, LaTeX resume, AI resume, job matching, ATS resume builder, humanize resume" />
   <meta name="author" content="Sri Akash Kadali" />
-  <link rel="canonical" href="https://your-domain.com/index.html" />
-
-  <!-- ========================= SOCIAL META ========================= -->
-  <meta property="og:title" content="HIREX — AI Resume Optimizer" />
-  <meta property="og:description" content="AI-powered LaTeX resume optimizer that aligns your resume with job descriptions for ATS-safe precision." />
-  <meta property="og:image" content="/static/assets/og-banner.png" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-domain.com" />
-  <meta name="twitter:card" content="summary_large_image" />
 
   <!-- ========================= ICONS ========================= -->
   <link rel="icon" type="image/png" href="/static/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/static/assets/favicon.png" />
 
-  <!-- ========================= PRELOADS ========================= -->
-  <link rel="preload" href="/static/assets/logo.png" as="image" />
-  <link rel="preload" href="/static/css/app.css" as="style" />
-
-  <!-- ========================= FONTS ========================= -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
   <!-- ========================= STYLES ========================= -->
   <link rel="stylesheet" href="/static/css/app.css?v=1.0.0" />
 
-  <!-- ========================= STRUCTURED DATA ========================= -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "HIREX",
-    "applicationCategory": "Productivity",
-    "operatingSystem": "Web",
-    "creator": {
-      "@type": "Person",
-      "name": "Sri Akash Kadali",
-      "affiliation": "University of Maryland, College Park"
-    },
-    "description": "AI-powered LaTeX resume optimizer for job-aware, ATS-compliant outputs.",
-    "url": "https://your-domain.com"
-  }
-  </script>
-
-  <!-- ========================= INLINE STYLES ========================= -->
   <style>
     :root {
       --sidebar-width: 220px;
-      --surface-1: rgba(255, 255, 255, 0.06);
-      --surface-2: rgba(255, 255, 255, 0.12);
+      --surface-1: rgba(255,255,255,0.06);
+      --surface-2: rgba(255,255,255,0.12);
       --text-muted: #c0cadb;
       --brand-bg: #0a1020;
-      --fade-duration: 0.8s;
     }
 
     body {
@@ -78,170 +41,104 @@
     }
 
     header.appbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.75rem 1rem;
-      background: rgba(0, 0, 0, 0.35);
+      position: sticky; top: 0;
+      display: flex; align-items: center;
+      gap: 1rem; padding: 0.75rem 1rem;
+      background: rgba(0,0,0,0.35);
       backdrop-filter: saturate(140%) blur(10px);
       border-bottom: 1px solid var(--surface-2);
-      animation: fadeInDown var(--fade-duration) ease both;
+      z-index: 100;
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-weight: 600;
-      text-decoration: none;
-      color: #fff;
-      letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 0.6rem;
+      font-weight: 600; color: #fff; text-decoration: none;
     }
 
-    .layout {
-      display: grid;
-      grid-template-columns: var(--sidebar-width) 1fr;
-      min-height: calc(100vh - 56px);
-    }
+    .layout { display: grid; grid-template-columns: var(--sidebar-width) 1fr; min-height: calc(100vh - 56px); }
+    aside.sidebar { border-right: 1px solid var(--surface-2); padding: 1rem 0.75rem; background: rgba(255,255,255,0.02); }
 
-    aside.sidebar {
-      border-right: 1px solid var(--surface-2);
-      padding: 1rem 0.75rem;
-      background: rgba(255, 255, 255, 0.02);
-      position: sticky;
-      top: 56px;
-      height: calc(100vh - 56px);
-    }
-
-    .vnav {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
+    .vnav { list-style: none; padding: 0; margin: 0; }
     .vnav a {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.55rem 0.6rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      color: #fff;
-      font-size: 0.95rem;
-      transition: background 0.2s ease, color 0.2s ease;
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.55rem 0.6rem; border-radius: 0.5rem;
+      text-decoration: none; color: #fff; font-size: 0.95rem;
+      transition: background .2s ease;
     }
-    .vnav a:hover { background: rgba(255, 255, 255, 0.08); }
+    .vnav a:hover { background: rgba(255,255,255,0.08); }
     .vnav a[aria-current="page"] { background: var(--surface-1); }
 
-    main.console {
-      padding: 1.25rem;
-      overflow-y: auto;
-      max-width: 1024px;
-      margin: 0 auto;
-    }
+    main.console { padding: 1.25rem; max-width: 1024px; margin: 0 auto; }
 
     .card {
       background: var(--surface-1);
       border: 1px solid var(--surface-2);
       border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-      transform: translateY(40px);
-      opacity: 0;
-      transition: transform var(--fade-duration) ease-out, opacity var(--fade-duration) ease-out;
+      padding: 1.25rem; margin-bottom: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
     }
-
-    .card.is-animated { transform: translateY(0); opacity: 1; }
 
     input, textarea {
-      width: 100%;
-      margin-top: 0.25rem;
-      padding: 0.5rem;
-      border-radius: 8px;
+      width: 100%; margin-top: .25rem;
+      padding: .6rem .8rem; border-radius: 8px;
       border: 1px solid var(--surface-2);
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-size: 0.95rem;
-      transition: border-color 0.2s ease;
+      background: rgba(255,255,255,0.05); color: #fff;
+      font-size: 0.95rem; transition: border-color .2s ease;
     }
-    input:focus, textarea:focus {
-      border-color: #6a4fff;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(106, 79, 255, 0.3);
-    }
+    input:focus, textarea:focus { border-color: #6a4fff; outline: none; }
 
     button {
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1rem;
-      font-weight: 600;
-      transition: 0.2s ease;
+      cursor: pointer; border: none; border-radius: 8px;
+      padding: 0.6rem 1rem; font-weight: 600; transition: .2s ease;
     }
+    .cta-primary { background: linear-gradient(135deg,#4f8cff,#6a4fff); color:#fff; }
+    .cta-secondary { background: rgba(255,255,255,0.1); color:#fff; }
 
-    .cta-primary {
-      background: linear-gradient(135deg, #4f8cff, #6a4fff);
-      color: white;
-      box-shadow: 0 3px 8px rgba(79, 140, 255, 0.3);
+    /* 🧠 Modern Toggle Switch */
+    .toggle-container {
+      display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none;
     }
-    .cta-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(79, 140, 255, 0.45);
+    .switch {
+      position: relative; display: inline-block; width: 52px; height: 28px;
     }
-
-    .cta-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #555; transition: 0.4s;
+      border-radius: 28px;
     }
+    .slider:before {
+      position: absolute; content: "";
+      height: 22px; width: 22px; left: 3px; bottom: 3px;
+      background-color: white; transition: 0.4s; border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    input:checked + .slider { background: linear-gradient(135deg,#4f8cff,#6a4fff); }
+    input:checked + .slider:before { transform: translateX(24px); }
+    .toggle-label { font-size: 0.95rem; color: #fff; font-weight: 500; }
 
     footer {
-      padding: 1rem;
-      text-align: center;
-      color: var(--text-muted);
-      border-top: 1px solid var(--surface-2);
-      font-size: 0.85rem;
-      animation: fadeInUp var(--fade-duration) ease both;
-      animation-delay: 0.5s;
+      padding: 1rem; text-align:center; color: var(--text-muted);
+      border-top: 1px solid var(--surface-2); font-size: 0.85rem;
     }
 
     .toast {
-      position: fixed;
-      bottom: 1.25rem;
-      right: 1.25rem;
-      background: #1a1f35;
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-      display: none;
-      z-index: 999;
+      position: fixed; bottom: 1.25rem; right: 1.25rem;
+      background:#1a1f35; color:white;
+      padding:0.75rem 1rem; border-radius:8px;
+      display:none; z-index:999;
     }
 
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 768px) {
-      .layout { grid-template-columns: 1fr; }
-      aside.sidebar { display: none; }
-      main.console { padding: 1rem; }
-    }
-
-    @media (prefers-color-scheme: light) {
-      body { background: #0a1020; color: #fff; }
-      .card { background: rgba(255, 255, 255, 0.06); color: #fff; }
-      .vnav a { color: #fff; }
-      .vnav a[aria-current="page"] { background: rgba(255, 255, 255, 0.1); }
+    @media(max-width:768px){
+      .layout{ grid-template-columns:1fr; }
+      aside.sidebar{ display:none; }
+      main.console{ padding:1rem; }
     }
   </style>
 </head>
 
 <body data-app="hirex">
-  <a href="#content" class="sr-only">Skip to content</a>
-
   <!-- ========================= HEADER ========================= -->
   <header class="appbar" role="banner">
     <a href="/index.html" class="brand">
@@ -264,18 +161,18 @@
       </ul>
     </aside>
 
-    <!-- ========================= MAIN CONTENT ========================= -->
+    <!-- ========================= MAIN ========================= -->
     <main id="content" class="console" role="main">
       <section class="card anim">
         <h1>Job-Aware Resume Optimizer</h1>
         <p class="muted">
-          Upload your <strong>.tex</strong> resume and paste the job description below.<br />
-          HIREX will optimize structure, tone, and coursework alignment using OpenAI + Humanize AI.
+          Upload your <strong>.tex</strong> resume and paste the job description.<br/>
+          HIREX will auto-detect the company and role, optimize bullet points, and optionally refine tone with Humanize AI.
         </p>
       </section>
 
       <section class="card anim">
-        <form id="optimize-form">
+        <form id="optimize-form" novalidate>
           <div class="field">
             <label for="resume"><strong>Base Resume (.tex)</strong></label>
             <input type="file" id="resume" name="resume" accept=".tex" required />
@@ -283,7 +180,17 @@
 
           <div class="field" style="margin-top:1rem;">
             <label for="jd"><strong>Job Description</strong></label>
-            <textarea id="jd" name="jd" rows="8" placeholder="Paste the job description here..." required></textarea>
+            <textarea id="jd" name="jd" rows="8" placeholder="Paste the full job description here..." required></textarea>
+          </div>
+
+          <div class="field" style="margin-top:1rem;">
+            <div class="toggle-container">
+              <label class="switch">
+                <input type="checkbox" id="use_humanize" />
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label">Apply Humanize AI (tone refinement)</span>
+            </div>
           </div>
 
           <div style="margin-top:1.25rem;display:flex;gap:.8rem;flex-wrap:wrap;">
@@ -294,16 +201,15 @@
       </section>
 
       <section class="card anim muted">
-        <p>⚙️ Optimized LaTeX output will appear on the <a href="/preview.html">Preview</a> page.</p>
+        <p>⚙️ Once optimized, view and download both versions on the <a href="/preview.html">Preview</a> page.</p>
       </section>
     </main>
   </div>
 
-  <!-- ========================= TOAST ========================= -->
+  <!-- ========================= TOAST + FOOTER ========================= -->
   <div id="toast" class="toast" role="status" aria-live="polite">Ready.</div>
 
-  <!-- ========================= FOOTER ========================= -->
-  <footer role="contentinfo" class="anim">
+  <footer role="contentinfo">
     <p>&copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong></p>
     <p class="muted">
       Build v1.0.0 |

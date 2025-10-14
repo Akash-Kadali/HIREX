@@ -144,7 +144,6 @@
       margin: 0 auto;
     }
 
-    /* --- Animated Cards --- */
     .card {
       background: var(--surface-1);
       border: 1px solid var(--surface-2);
@@ -156,7 +155,6 @@
       opacity: 0;
       transition: transform var(--fade-duration) ease-out, opacity var(--fade-duration) ease-out;
     }
-
     .card.is-animated { transform: translateY(0); opacity: 1; }
 
     h1, h2, h3 { margin: 0 0 0.75rem; }
@@ -176,7 +174,6 @@
       animation-delay: 0.5s;
     }
 
-    /* Animations */
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -238,23 +235,23 @@
         <h2>Project Overview</h2>
         <p>
           HIREX intelligently transforms your <strong>LaTeX resume</strong> into a job-specific, ATS-optimized document
-          using OpenAI and Humanize APIs. It ensures factual accuracy, measurable impact, and clarity without changing
-          company names or durations.
+          using OpenAI and Humanize APIs. It ensures factual accuracy, measurable impact, and clarity while keeping
+          all existing company names and durations intact.
         </p>
         <ul>
           <li>🔍 Extracts critical JD keywords and aligns resume sections accordingly.</li>
-          <li>🤖 Enhances bullet tone and clarity using AI-driven rewriting while keeping facts intact.</li>
-          <li>🧩 Maintains Education, Skills, and Project integrity from the base resume.</li>
-          <li>📄 Produces downloadable <code>.tex</code> and <code>.pdf</code> outputs seamlessly.</li>
+          <li>🤖 Refines bullet tone and clarity using AI-driven rewriting (Humanize optional).</li>
+          <li>🧩 Preserves macros, preamble, and Education/Skills sections completely.</li>
+          <li>📄 Generates downloadable <code>.tex</code> and <code>.pdf</code> resumes seamlessly.</li>
         </ul>
       </section>
 
       <section class="card anim">
         <h2>Architecture</h2>
         <ol>
-          <li><strong>Frontend:</strong> Responsive HTML/JS interface for uploading, processing, and previewing resumes.</li>
-          <li><strong>Backend:</strong> FastAPI-powered microservice handling sanitization, AI optimization, and LaTeX rendering.</li>
-          <li><strong>LLM Layer:</strong> OpenAI GPT + Humanize.io for tone correction and content relevance enhancement.</li>
+          <li><strong>Frontend:</strong> Responsive HTML/JS interface for upload, optimization, and preview.</li>
+          <li><strong>Backend:</strong> FastAPI engine handling input sanitization, AI calls, and PDF compilation.</li>
+          <li><strong>AI Layer:</strong> OpenAI GPT-4 + Humanize.io for domain-specific optimization and tone refinement.</li>
         </ol>
       </section>
 
@@ -263,16 +260,16 @@
         <ul>
           <li>👨‍💻 <strong>Developer:</strong> Sri Akash Kadali</li>
           <li>🏫 <strong>Institution:</strong> University of Maryland, College Park</li>
-          <li>🧠 <strong>Concept:</strong> Job-aware resume optimization inspired by modern ATS systems.</li>
-          <li>⚙️ <strong>Stack:</strong> FastAPI · Python · LaTeX · Humanize API · HTML · JS · CSS</li>
+          <li>🧠 <strong>Concept:</strong> Job-aware resume optimization inspired by ATS and hiring manager evaluation workflows.</li>
+          <li>⚙️ <strong>Stack:</strong> FastAPI · Python · LaTeX · OpenAI API · Humanize API · HTML · JS · CSS</li>
         </ul>
       </section>
 
       <section class="card anim">
         <h2>License</h2>
         <p>
-          HIREX is released under the <strong>MIT License</strong>.
-          You are free to use, modify, and distribute it for personal, research, or open-source purposes.
+          HIREX is distributed under the <strong>MIT License</strong>.<br/>
+          You are free to use, modify, and distribute it for personal, academic, or open-source purposes.
         </p>
       </section>
     </main>
@@ -288,6 +285,11 @@
   </footer>
 
   <!-- ========================= SCRIPTS ========================= -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".card").forEach(c => c.classList.add("is-animated"));
+    });
+  </script>
   <script src="/static/js/ui.js" defer></script>
 </body>
 </html>

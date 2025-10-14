@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from api import optimize
-from api import debug as debug_api  # <-- your new debug router
+from api import debug as debug_api  # optional debug routes
 from backend.core.utils import log_event
 
 app = FastAPI(
@@ -40,9 +40,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# --- REQUEST/RESPONSE TRACE MIDDLEWARE (prints to CMD) ---
+
+# ------------------------------------------------------------
+# Middleware — Request/Response Tracer
+# ------------------------------------------------------------
 @app.middleware("http")
 async def trace_requests(request: Request, call_next):
+    """Trace requests for debug output in console."""
     try:
         log_event(f"➡️  {request.method} {request.url.path}")
         if request.query_params:
@@ -50,15 +54,18 @@ async def trace_requests(request: Request, call_next):
         if request.method in ("POST", "PUT", "PATCH"):
             body = await request.body()
             log_event(f"   ├─ body-bytes={len(body)}")
+
         response = await call_next(request)
         log_event(f"⬅️  {request.method} {request.url.path} → {response.status_code}")
         return response
     except Exception as e:
-        log_event(f"💥 middleware error on {request.method} {request.url.path}: {e}")
+        log_event(f"💥 Middleware error on {request.method} {request.url.path}: {e}")
         raise
 
 
+# ------------------------------------------------------------
 # Allow frontend access
+# ------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -89,6 +96,7 @@ def serve_index():
 
 @app.get("/{page_name}")
 def serve_html(page_name: str):
+    """Serve /about, /help, etc."""
     normalized = page_name if page_name.endswith(".html") else f"{page_name}.html"
     html_path = os.path.join(FRONTEND_DIR, normalized)
     if os.path.exists(html_path):
@@ -99,8 +107,9 @@ def serve_html(page_name: str):
 # ============================================================
 # 🧩 API Routes
 # ============================================================
-app.include_router(optimize.router,  prefix="/api",       tags=["Optimization"])
-app.include_router(debug_api.router, prefix="/api/debug", tags=["Debug"])  # <-- mounted
+app.include_router(optimize.router, prefix="/api", tags=["Optimization"])
+app.include_router(debug_api.router, prefix="/api/debug", tags=["Debug"])
+
 
 @app.get("/health", tags=["System"])
 def health():
@@ -118,14 +127,14 @@ def start_fastapi():
 
 
 def start_window():
-    """Launch PyWebview GUI window with a custom Close (✖) button."""
+    """Launch PyWebview GUI window with a custom floating ✖ Close button."""
     import webview
 
-    # Wait for backend to initialize
+    # Wait for backend to boot
     time.sleep(1.5)
 
     class JSBridge:
-        """JS → Python bridge for closing app."""
+        """JS → Python bridge for closing the app."""
         def close_app(self):
             print("\n🔴 Close button clicked — exiting HIREX...\n")
             os.kill(os.getpid(), signal.SIGTERM)
@@ -136,12 +145,12 @@ def start_window():
         width=1280,
         height=820,
         resizable=True,
-        frameless=False,  # native Windows title bar
+        frameless=False,  # use native Windows title bar
         background_color="#10131a",
         js_api=JSBridge(),
     )
 
-    # Inject floating close button
+    # Inject top-right ✖ button (HTML overlay)
     def inject_close_button():
         js_code = """
         const btn = document.createElement('button');
@@ -165,7 +174,7 @@ def start_window():
         """
         window.evaluate_js(js_code)
 
-    # Start PyWebview GUI
+    # Launch the desktop window
     try:
         webview.start(func=inject_close_button, gui="edgechromium", debug=False)
     except Exception:
@@ -180,9 +189,11 @@ if __name__ == "__main__":
     print("✅ Backend: http://127.0.0.1:8000")
     print("🟢 Click ✖ or press Ctrl+C to exit.\n")
 
+    # Run FastAPI backend in background
     backend_thread = threading.Thread(target=start_fastapi, daemon=True)
     backend_thread.start()
 
-    # Launch UI window
+    # Launch the desktop UI window
     start_window()
-#uvicorn backend.main:app --reload
+
+# To run backend only (no GUI):  uvicorn main:app --reload

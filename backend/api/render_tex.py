@@ -12,7 +12,6 @@ from backend.core.utils import log_event
 # ============================================================
 # 🧠 Direct LaTeX Renderer
 # ============================================================
-
 def render_final_tex(final_tex: str) -> str:
     """
     Returns the LaTeX text exactly as received from GPT/Humanize,
@@ -26,30 +25,34 @@ def render_final_tex(final_tex: str) -> str:
     if not isinstance(final_tex, str):
         raise ValueError("render_final_tex() expects a LaTeX string input.")
 
-    # --- Trim and clean code-fence artifacts ---
+    # --- Trim and clean any code-fence artifacts ---
     cleaned = (
         final_tex.replace("```latex", "")
-                 .replace("```", "")
-                 .strip()
+        .replace("```", "")
+        .strip()
     )
 
     # --- Normalize line endings ---
     cleaned = cleaned.replace("\r\n", "\n").replace("\r", "\n")
 
-    # --- Basic validation ---
+    # --- Remove stray leading/trailing blank lines ---
+    cleaned = re.sub(r"^\s*\n", "", cleaned)
+    cleaned = re.sub(r"\n\s*$", "\n", cleaned)
+
+    # --- Basic validation warnings ---
     if not re.search(r"\\documentclass", cleaned):
-        log_event("⚠️ Warning: output LaTeX missing \\documentclass header.")
+        log_event("⚠️ [RENDER] Missing \\documentclass header.")
     if "\\begin{document}" not in cleaned:
-        log_event("⚠️ Warning: output LaTeX missing \\begin{document}.")
+        log_event("⚠️ [RENDER] Missing \\begin{document} block.")
 
     # --- Ensure proper closing tag ---
     if not cleaned.strip().endswith("\\end{document}"):
         cleaned += "\n\\end{document}\n"
 
-    # --- Final tidy: collapse excessive blank lines ---
+    # --- Collapse excessive blank lines for cleanliness ---
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
-    log_event("✅ Final LaTeX render complete and safe for compilation.")
+    log_event("✅ [RENDER] Final LaTeX render complete and safe for compilation.")
     return cleaned
 
 

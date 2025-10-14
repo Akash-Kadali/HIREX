@@ -54,7 +54,7 @@ function base64ToBlob(base64, mime = "application/octet-stream") {
     return blob;
   } catch (err) {
     console.error("[HIREX] base64ToBlob error:", err);
-    HIREX?.toast?.("⚠️ Failed to convert file from Base64.");
+    HIREX?.toast?.("⚠️ Failed to convert Base64 file.");
     HIREX?.debugLog?.("base64ToBlob ERROR", { err: err.message });
     return null;
   }

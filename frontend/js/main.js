@@ -1,7 +1,8 @@
 /* ============================================================
-   HIREX • main.js (LaTeX-only version, with extended timeout)
+   HIREX • main.js (Auto Company/Role Extraction + PDF Ready)
    Handles resume upload, JD submission, and backend optimization API call.
-   Optimized for long-running AI/Humanize operations (up to 3 minutes).
+   Automatically extracts Company & Role from JD via backend OpenAI call.
+   Stores both Original and Humanized PDFs if available.
    Author: Sri Akash Kadali
    ============================================================ */
 
@@ -9,141 +10,102 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("optimize-form");
   const toast = document.getElementById("toast");
 
-  // Detect backend endpoint (local FastAPI vs packaged PyWebview app)
   const API_BASE =
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "localhost"
+    ["127.0.0.1", "localhost"].includes(window.location.hostname)
       ? "http://127.0.0.1:8000"
       : window.location.origin;
 
   /* ============================================================
-     🧠 Toast Notification System
+     🧠 Toast Utility
      ============================================================ */
-  function showToast(message, timeout = 2500) {
-    if (!toast) return alert(message);
-    toast.textContent = message;
-    toast.classList.add("show");
+  function showToast(msg, timeout = 2500) {
+    if (!toast) return alert(msg);
+    toast.textContent = msg;
     toast.style.display = "block";
+    toast.style.opacity = "1";
     setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => (toast.style.display = "none"), 250);
+      toast.style.opacity = "0";
+      setTimeout(() => (toast.style.display = "none"), 300);
     }, timeout);
   }
 
   /* ============================================================
-     🧩 Utility Helpers
+     🧩 Helpers
      ============================================================ */
-  function isValidFile(file) {
-    return file && file.name.toLowerCase().endsWith(".tex");
-  }
+  const isValidFile = (f) => f && f.name.toLowerCase().endsWith(".tex");
+  const disableForm = (state) =>
+    form && [...form.elements].forEach((el) => (el.disabled = state));
 
-  function disableForm(disabled = true) {
-    if (!form) return;
-    for (const el of form.elements) el.disabled = disabled;
-  }
-
-  function persistResults(data) {
+  const persistResults = (data, useHumanize) => {
     try {
       localStorage.setItem("hirex_tex", data.tex_string || "");
+      localStorage.setItem("hirex_pdf", data.pdf_base64 || "");
+      localStorage.setItem("hirex_pdf_humanized", data.pdf_base64_humanized || "");
       localStorage.setItem("hirex_timestamp", Date.now().toString());
-      console.log("%c[HIREX] Saved optimized LaTeX to localStorage ✅", "color:#6a4fff");
-    } catch (err) {
-      console.error("[HIREX] Failed to persist results:", err);
-      showToast("⚠️ Unable to cache output in browser.");
+      localStorage.setItem("hirex_company", data.company_name || "UnknownCompany");
+      localStorage.setItem("hirex_role", data.role || "UnknownRole");
+      localStorage.setItem("hirex_use_humanize", useHumanize ? "true" : "false");
+
+      console.log("%c[HIREX] Cached optimization results ✅", "color:#6a4fff");
+      console.table({
+        Company: data.company_name,
+        Role: data.role,
+        "Has PDF": !!data.pdf_base64,
+        "Has Humanized": !!data.pdf_base64_humanized,
+      });
+    } catch (e) {
+      console.error("[HIREX] Cache error:", e);
     }
-  }
+  };
 
   /* ============================================================
-     🚀 Form Submission — Main Handler
+     🚀 Submit Handler
      ============================================================ */
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    HIREX?.debugLog?.("FORM SUBMIT triggered");
+    const file = document.getElementById("resume")?.files?.[0];
+    const jd = document.getElementById("jd")?.value?.trim();
+    const useHumanize = document.getElementById("use_humanize")?.checked;
 
-    const resumeFile = document.getElementById("resume")?.files?.[0];
-    const jdText = document.getElementById("jd")?.value?.trim();
-
-    if (!isValidFile(resumeFile) || !jdText) {
-      showToast("⚠️ Please upload a valid .tex file and paste a job description.");
-      HIREX?.debugLog?.("FORM INVALID", {
-        hasFile: !!resumeFile,
-        jdLen: jdText?.length || 0,
-      });
+    if (!isValidFile(file) || !jd) {
+      showToast("⚠️ Upload a valid .tex file and paste job description.");
       return;
     }
 
     disableForm(true);
-    showToast("⏳ Optimizing your resume... (may take 2–3 minutes)");
-    HIREX?.debugLog?.("FORM VALID", {
-      file: resumeFile.name,
-      jdLen: jdText.length,
-    });
+    showToast("⏳ Optimizing and extracting role/company... (2–3 min)");
+
+    const formData = new FormData();
+    formData.append("base_resume_tex", file);
+    formData.append("jd_text", jd);
+    formData.append("use_humanize", useHumanize ? "true" : "false");
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 180000); // 3-min timeout
 
     try {
-      const formData = new FormData();
-      formData.append("base_resume_tex", resumeFile);
-      formData.append("jd_text", jdText);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 180000); // ⏰ 3 min timeout
-
-      HIREX?.debugLog?.("FETCH /api/optimize → start", {
-        apiBase: API_BASE,
-        timeoutMs: 180000,
-      });
-
-      const response = await fetch(`${API_BASE}/api/optimize`, {
+      const res = await fetch(`${API_BASE}/api/optimize`, {
         method: "POST",
         body: formData,
         signal: controller.signal,
       });
-
       clearTimeout(timeout);
-      HIREX?.debugLog?.("FETCH /api/optimize → complete", { status: response.status });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        HIREX?.debugLog?.("FETCH ERROR", { status: response.status, errText });
-        throw new Error(`Server error (${response.status}): ${errText || "Unknown error"}`);
-      }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      if (!data?.tex_string) throw new Error("Empty LaTeX output.");
 
-      const data = await response.json();
-      HIREX?.debugLog?.("FETCH JSON parsed", {
-        hasTex: !!data.tex_string,
-        texLen: (data.tex_string || "").length,
-      });
+      persistResults(data, useHumanize);
 
-      if (!data || !data.tex_string) {
-        HIREX?.debugLog?.("FETCH INVALID DATA", data);
-        throw new Error("Invalid response from backend.");
-      }
-
-      // 💾 Save for Preview
-      persistResults(data);
-      HIREX?.debugLog?.("LOCALSTORAGE SAVED", {
-        texLen: (data.tex_string || "").length,
-        keys: Object.keys(localStorage),
-      });
-
-      // 🔍 Verify saved data immediately
-      console.log("[HIREX] Cached LaTeX sample:", (data.tex_string || "").slice(0, 200));
-
-      showToast("✅ Resume optimized successfully! Redirecting...");
-      console.log("[HIREX] Optimization complete:", data);
-
-      HIREX?.debugLog?.("REDIRECT → preview.html");
-      setTimeout(() => (window.location.href = "/preview.html"), 1200);
+      const company = data.company_name || "Company";
+      const role = data.role || "Role";
+      showToast(`✅ Optimized for ${company} (${role})! Opening preview...`);
+      setTimeout(() => (window.location.href = "/preview.html"), 1500);
     } catch (err) {
-      HIREX?.debugLog?.("FORM ERROR", { msg: err.message, name: err.name });
-      if (err.name === "AbortError") {
-        showToast("⚠️ Request timed out. The optimization took longer than expected.");
-      } else if (err.name === "TypeError") {
-        showToast("🌐 Network error. Check backend connection.");
-      } else {
-        console.error("[HIREX] Optimization Error:", err);
-        showToast(`❌ ${err.message || "Unexpected error occurred."}`);
-      }
+      console.error("[HIREX] Error:", err);
+      if (err.name === "AbortError") showToast("⚠️ Timeout: optimization took too long.");
+      else showToast("❌ " + (err.message || "Unexpected error."));
     } finally {
       disableForm(false);
     }
@@ -153,54 +115,47 @@ document.addEventListener("DOMContentLoaded", () => {
      🔄 Reset Handler
      ============================================================ */
   form?.addEventListener("reset", () => {
-    ["hirex_tex", "hirex_timestamp"].forEach((k) => localStorage.removeItem(k));
-    showToast("🧹 Cleared form and cache.");
-    HIREX?.debugLog?.("FORM RESET + CACHE CLEARED");
+    [
+      "hirex_tex",
+      "hirex_timestamp",
+      "hirex_company",
+      "hirex_role",
+      "hirex_use_humanize",
+      "hirex_pdf",
+      "hirex_pdf_humanized",
+    ].forEach((k) => localStorage.removeItem(k));
+    showToast("🧹 Form cleared.");
   });
 
   /* ============================================================
      🖋️ UX Enhancements
      ============================================================ */
   const jdBox = document.getElementById("jd");
-  if (jdBox) {
-    jdBox.addEventListener("focus", () => {
-      jdBox.scrollIntoView({ behavior: "smooth", block: "center" });
-      HIREX?.debugLog?.("JD BOX FOCUSED");
-    });
-  }
+  jdBox?.addEventListener("focus", () =>
+    jdBox.scrollIntoView({ behavior: "smooth", block: "center" })
+  );
 
-  // Ctrl+Enter quick submit
+  // Ctrl + Enter quick submit
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "Enter") {
-      e.preventDefault();
-      HIREX?.debugLog?.("CTRL+ENTER SUBMIT");
-      form?.requestSubmit();
-    }
+    if (e.ctrlKey && e.key === "Enter") form?.requestSubmit();
   });
 
   // Drag & Drop file upload
   form?.addEventListener("dragover", (e) => e.preventDefault());
   form?.addEventListener("drop", (e) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (isValidFile(file)) {
+    const f = e.dataTransfer.files[0];
+    if (isValidFile(f)) {
       document.getElementById("resume").files = e.dataTransfer.files;
-      showToast(`📄 File selected: ${file.name}`);
-      HIREX?.debugLog?.("FILE DROPPED", { name: file.name });
-    } else {
-      showToast("⚠️ Only .tex files are supported.");
-      HIREX?.debugLog?.("INVALID FILE DROP", { name: file?.name });
-    }
+      showToast(`📄 File selected: ${f.name}`);
+    } else showToast("⚠️ Only .tex files supported.");
   });
 
   /* ============================================================
-     ✅ Initialization Log
+     ✅ Init Log
      ============================================================ */
-  console.log("%c[HIREX] main.js initialized (extended timeout mode).", "color:#4f8cff;font-weight:bold;");
-  HIREX?.debugLog?.("MAIN INIT COMPLETE", {
-    api: API_BASE,
-    hasForm: !!form,
-    origin: window.location.origin,
-    timeoutMs: 180000,
-  });
+  console.log(
+    "%c[HIREX] main.js initialized (Auto Company/Role + Dual PDF + Humanize ready)",
+    "color:#4f8cff;font-weight:bold;"
+  );
 });

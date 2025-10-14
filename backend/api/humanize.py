@@ -1,6 +1,7 @@
 """
 HIREX • api/humanize.py
 Integrates with AIHumanize.io API for tone-only rewriting of Experience & Project bullets.
+Now includes strong LaTeX sanitizer to prevent duplicated preamble or document corruption.
 Optimized for concurrency and reliability.
 Author: Sri Akash Kadali
 """
@@ -17,8 +18,44 @@ from backend.core.utils import log_event
 AIHUMANIZE_API_URL = "https://aihumanize.io/api/v1/rewrite"
 AIHUMANIZE_MODE = "0"  # 0: quality | 1: balance | 2: enhanced
 AIHUMANIZE_EMAIL = "kadali18@terpmail.umd.edu"  # registered account
-MAX_CONCURRENT = 5  # control concurrency
-TIMEOUT_SEC = 15.0   # per-request timeout
+MAX_CONCURRENT = 5  # concurrent request limit
+TIMEOUT_SEC = 15.0  # per-request timeout (seconds)
+
+
+# ============================================================
+# 🧹 Sanitizer: Removes Any LaTeX Preamble or Junk
+# ============================================================
+def clean_humanized_text(text: str) -> str:
+    """Remove LaTeX headers, packages, or markdown fences accidentally injected by AIHumanize."""
+    cleaned = text
+
+    # Remove document/preamble-level commands
+    cleaned = re.sub(r"(?i)\\document(class|begin|end)\{.*?\}", "", cleaned)
+    cleaned = re.sub(r"(?i)\\usepackage(\[[^\]]*\])?\{.*?\}", "", cleaned)
+    cleaned = re.sub(r"(?i)\\newcommand\{[^}]*\}\{[^}]*\}", "", cleaned)
+    cleaned = re.sub(r"(?i)\\input\{.*?\}", "", cleaned)
+
+    # Remove comments and resume headers
+    cleaned = re.sub(r"(?m)^%.*$", "", cleaned)
+    cleaned = re.sub(r"(?i)%[-=]+.*?\n", "", cleaned)
+    cleaned = re.sub(r"(?i)%\s*resume.*?\n", "", cleaned)
+
+    # Remove markdown/code fences and stray braces
+    cleaned = cleaned.replace("```latex", "").replace("```", "")
+    cleaned = re.sub(r"[\{\}]+", " ", cleaned)
+
+    # Escape unescaped % (so they don't comment out LaTeX text)
+    cleaned = re.sub(r"(?<!\\)%", r"\\%", cleaned)
+
+    # Collapse excessive whitespace
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+
+    # Final safety: reject if forbidden LaTeX keywords remain
+    if re.search(r"\\document|\\usepackage|\\begin|\\newcommand", cleaned, re.I):
+        log_event("⚠️ [HUMANIZE] Unsafe LaTeX fragment detected — reverting to original.")
+        return ""
+
+    return cleaned
 
 
 # ============================================================
@@ -27,8 +64,7 @@ TIMEOUT_SEC = 15.0   # per-request timeout
 async def humanize_resume_items(tex_content: str) -> str:
     """
     Finds all \\resumeItem{...} bullets and sends each one to AIHumanize.io
-    for tone/clarity improvement. Processes up to MAX_CONCURRENT bullets
-    concurrently with retries. Preserves LaTeX structure.
+    for tone/clarity improvement. Sanitizes every rewritten bullet to ensure valid LaTeX.
     """
     log_event("🟨 [HUMANIZE] Step 1: Extracting bullets")
     bullets = re.findall(r"\\resumeItem\{(.*?)\}", tex_content, re.DOTALL)
@@ -43,19 +79,21 @@ async def humanize_resume_items(tex_content: str) -> str:
         "Content-Type": "application/json",
     }
 
+    # ------------------------------------------------------------
+    # 🧩 Individual Bullet Rewrite with Sanitization + Retry
+    # ------------------------------------------------------------
     async def rewrite_bullet(bullet: str, idx: int) -> str:
-        """Handle a single bullet rewrite with timeout + retry."""
-        text = bullet.strip()
-        if not text:
-            return text
+        original = bullet.strip()
+        if not original:
+            return original
 
         payload = {
             "model": AIHUMANIZE_MODE,
             "mail": AIHUMANIZE_EMAIL,
-            "data": text,
+            "data": original,
         }
 
-        for attempt in range(2):  # retry twice if fails
+        for attempt in range(2):  # retry twice max
             try:
                 async with httpx.AsyncClient(timeout=TIMEOUT_SEC) as client:
                     r = await client.post(AIHUMANIZE_API_URL, headers=headers, json=payload)
@@ -63,52 +101,47 @@ async def humanize_resume_items(tex_content: str) -> str:
                     data = r.json()
 
                     if data.get("code") == 200 and data.get("data"):
-                        rewritten = data["data"].strip()
-                        log_event(f"    • Bullet {idx} rewritten (len={len(rewritten)})")
-                        return rewritten
+                        candidate = clean_humanized_text(data["data"].strip())
+                        if candidate:
+                            log_event(f"    • Bullet {idx} rewritten safely (len={len(candidate)})")
+                            return candidate
+                        else:
+                            log_event(f"    • Bullet {idx} reverted (unsafe LaTeX detected)")
+                            return original
             except Exception as e:
                 log_event(f"⚠️ [HUMANIZE] Bullet {idx} attempt {attempt+1} failed: {e}")
                 await asyncio.sleep(0.5)
 
         log_event(f"⚠️ [HUMANIZE] Bullet {idx} fallback to original")
-        return text
+        return original
 
-    # Run limited concurrency
+    # ------------------------------------------------------------
+    # 🚦 Run Concurrently (Limited by Semaphore)
+    # ------------------------------------------------------------
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-    async def limited_rewrite(idx, b):
+    async def limited_rewrite(i, b):
         async with semaphore:
-            return await rewrite_bullet(b, idx)
+            return await rewrite_bullet(b, i)
 
-    tasks = [limited_rewrite(i, b) for i, b in enumerate(bullets, start=1)]
-    rewritten_lines = await asyncio.gather(*tasks)
+    rewritten_lines = await asyncio.gather(*[limited_rewrite(i, b) for i, b in enumerate(bullets, start=1)])
 
-    # ============================================================
-    # 🧩 Replace bullets safely in LaTeX
-    # ============================================================
+    # ------------------------------------------------------------
+    # 🧩 Replace Bullets Safely in LaTeX
+    # ------------------------------------------------------------
     out_tex = tex_content
     for old, new in zip(bullets, rewritten_lines):
         safe_new = new.strip().rstrip(".")
         out_tex = out_tex.replace(old, safe_new, 1)
 
-    # ✅ Optional cleanup for repetitive sentences
-    out_tex = re.sub(
-        r"(Developed automated processes for cleansing and analyzing large volumes of data,[^.]*)+",
-        r"\1",
-        out_tex,
-        flags=re.IGNORECASE,
-    )
+    # Final sanity cleanup: remove any stray reinserted preambles
+    out_tex = re.sub(r"(?i)\\document(class|begin|end)\{.*?\}", "", out_tex)
+    out_tex = re.sub(r"(?i)%\s*resume.*?\n", "", out_tex)
+    out_tex = re.sub(r"(?i)\\usepackage(\[[^\]]*\])?\{.*?\}", "", out_tex)
+    out_tex = re.sub(r"(?i)\\newcommand\{[^}]*\}\{[^}]*\}", "", out_tex)
+    out_tex = re.sub(r"\n{3,}", "\n\n", out_tex).strip()
 
-    # Debug output
-    print("\n" + "=" * 90)
-    print("💬 HUMANIZED BULLETS (DEBUG MODE)")
-    print("=" * 90)
-    print(out_tex)
-    print("=" * 90)
-    print(f"📏 Length after Humanize: {len(out_tex)} characters")
-    print("=" * 90 + "\n")
-
-    log_event(f"✅ [HUMANIZE] Completed {len(bullets)} bullets successfully (concurrent mode)")
+    log_event(f"✅ [HUMANIZE] Completed {len(bullets)} bullets successfully (sanitized concurrent mode)")
     return out_tex
 
 

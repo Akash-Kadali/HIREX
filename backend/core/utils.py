@@ -57,7 +57,7 @@ def safe_filename(name: str) -> str:
     if not name:
         return "file"
     name = re.sub(r"[^A-Za-z0-9_.-]", "_", name)
-    return name[:64]
+    return name.strip("_")[:64]
 
 
 # ============================================================
@@ -72,6 +72,7 @@ def log_event(msg: str):
 def benchmark(name: str):
     """
     Context manager for timing code blocks.
+
     Example:
         with benchmark("Optimize Resume"):
             run_some_code()

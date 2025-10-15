@@ -1,14 +1,17 @@
+# --- stdlib ---
 import asyncio
 import base64
 import json
 import re
 from typing import List, Tuple, Dict, Iterable, Optional, Set
 
+# --- third-party ---
 import httpx
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
+# --- local ---
 from backend.core import config
 from backend.core.compiler import compile_latex_safely
 from backend.core.security import secure_tex_input
@@ -17,6 +20,7 @@ from api.render_tex import render_final_tex
 
 router = APIRouter()
 openai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
+
 
 
 # ============================================================
@@ -1286,15 +1290,30 @@ async def add_experience_until_one_page(tex_content: str, jd_text: str, max_tota
 
 @router.post("/optimize")
 async def optimize_endpoint(
-    base_resume_tex: UploadFile,
     jd_text: str = Form(...),
     use_humanize: bool = Form(False),
+    base_resume_tex: Optional[UploadFile] = None,  # now optional
 ):
     try:
-        tex_bytes = await base_resume_tex.read()
-        tex = tex_bytes.decode("utf-8", errors="ignore")
-        raw_tex = secure_tex_input(base_resume_tex.filename, tex)
+        # ---- Load base .tex (upload if provided, else server default) ----
+        raw_tex: str = ""
+        if base_resume_tex is not None:
+            tex_bytes = await base_resume_tex.read()
+            if tex_bytes:
+                tex = tex_bytes.decode("utf-8", errors="ignore")
+                raw_tex = secure_tex_input(base_resume_tex.filename or "upload.tex", tex)
 
+        if not raw_tex:
+            default_path = getattr(config, "DEFAULT_BASE_RESUME", None)
+            if not default_path or not default_path.exists():
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Default base resume not found at {default_path}"
+                )
+            raw_tex = default_path.read_text(encoding="utf-8")
+            log_event(f"📄 Using server default base: {default_path}")
+
+        # ---- Core pipeline ----
         company_name, role = await extract_company_role(jd_text)
         optimized_tex = await optimize_resume_latex(raw_tex, jd_text)
 
@@ -1302,14 +1321,12 @@ async def optimize_endpoint(
             optimized_tex, jd_text, min_ratio=0.99, max_rounds=12
         )
 
-        # If still below 99%, try adding a few bullets while staying on one page,
-        # then one more coverage pass (light).
+        # If still <99%, try adding a few bullets but keep 1 page
         if coverage_report["ratio"] < 0.99:
             optimized_tex, added = await add_experience_until_one_page(
                 optimized_tex, jd_text, max_total_new=6, max_new_per_block=2
             )
             if added > 0:
-                # brief rebuild of skills + recompute coverage
                 optimized_tex = await _rebuild_skills_safely(optimized_tex, jd_text)
                 tokens = await get_coverage_targets_from_jd(jd_text)
                 coverage_report = compute_keyword_coverage(optimized_tex, tokens)
@@ -1319,8 +1336,7 @@ async def optimize_endpoint(
                     "missing": coverage_report["missing"][:40]
                 })
 
-
-        # Always ensure Skills are rebuilt once more to keep JD-aligned tokens & enforce bullets
+        # Always rebuild Skills once more before compile
         optimized_tex = await _rebuild_skills_safely(optimized_tex, jd_text)
         log_event("🔧 [SKILLS] Final rebuild before compile")
 
@@ -1330,7 +1346,7 @@ async def optimize_endpoint(
         base_pages = _pdf_page_count(pdf_bytes_original)
         log_event(f"📄 Base PDF pages: {base_pages}")
 
-        # ---------- If >1 page, iteratively trim Achievements and save after EVERY removal ----------
+        # ---------- Trim Achievements until 1 page (saving each trim) ----------
         job_dir = config.DATA_DIR / "Job Resumes"
         job_dir.mkdir(parents=True, exist_ok=True)
         safe_company, safe_role = safe_filename(company_name), safe_filename(role)
@@ -1363,7 +1379,7 @@ async def optimize_endpoint(
                 log_event(f"✅ Fits on one page after {trim_idx} trims.")
                 break
 
-        # ---------- Humanize ONCE, only if ≥90% coverage ----------
+        # ---------- Humanize ONCE if requested and ≥90% coverage ----------
         pdf_bytes_humanized: Optional[bytes] = None
         humanized_tex: Optional[str] = None
         did_humanize = False
@@ -1373,7 +1389,7 @@ async def optimize_endpoint(
             humanized_tex = await humanize_experience_bullets(cur_tex)
             humanized_tex_rendered = render_final_tex(humanized_tex)
             pdf_bytes_humanized = compile_latex_safely(humanized_tex_rendered)
-            # If humanized spills to 2 pages, trim Achievements mirroring base logic
+            # If humanized >1 page, mirror trim loop
             h_pages = _pdf_page_count(pdf_bytes_humanized)
             trim_h_idx = 0
             while h_pages > 1 and trim_h_idx < MAX_TRIMS:
@@ -1388,7 +1404,7 @@ async def optimize_endpoint(
                 h_pages = _pdf_page_count(pdf_bytes_humanized)
                 trim_h_idx += 1
 
-        # ---------- Save final base (and humanized if present) ----------
+        # ---------- Save final outputs ----------
         if cur_pdf_bytes:
             p = job_dir / f"Sri_Akash_Kadali_Resume_{safe_company}_{safe_role}.pdf"
             p.write_bytes(cur_pdf_bytes)

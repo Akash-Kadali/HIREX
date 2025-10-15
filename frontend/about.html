@@ -1,295 +1,203 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <!-- ========================= META ========================= -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0a1020" />
 
-  <!-- ========================= SEO ========================= -->
-  <title>About | HIREX — AI Resume Optimizer</title>
-  <meta name="description" content="Learn more about HIREX — an AI-powered LaTeX resume optimizer that transforms job descriptions and LaTeX resumes into ATS-safe, job-aware documents." />
-  <meta name="keywords" content="resume optimizer, LaTeX, FastAPI, AI resume, ATS, job aware resume, HIREX" />
+  <title>About | HIREX — AI Resume Optimizer v1.2.0</title>
+  <meta name="description" content="Learn more about HIREX — an AI-powered LaTeX resume optimizer that produces ATS-safe, job-aware documents." />
   <meta name="author" content="Sri Akash Kadali" />
-  <link rel="canonical" href="https://your-domain.com/about.html" />
-
-  <!-- ========================= SOCIAL META ========================= -->
   <meta property="og:title" content="HIREX — AI Resume Optimizer" />
   <meta property="og:description" content="HIREX optimizes LaTeX resumes using AI for job alignment, tone, and ATS compliance." />
   <meta property="og:image" content="/static/assets/og-banner.png" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-domain.com/about.html" />
-  <meta name="twitter:card" content="summary_large_image" />
 
-  <!-- ========================= ICONS ========================= -->
   <link rel="icon" type="image/png" href="/static/assets/favicon.png" />
-  <link rel="apple-touch-icon" href="/static/assets/favicon.png" />
+  <link rel="stylesheet" href="/static/css/base.css?v=1.2.0" />
+  <link rel="stylesheet" href="/static/css/animations.css?v=1.2.0" />
+  <link rel="stylesheet" href="/static/css/app.css?v=1.2.0" />
 
-  <!-- ========================= PRELOADS ========================= -->
-  <link rel="preload" href="/static/assets/logo.png" as="image" />
-  <link rel="preload" href="/static/css/app.css" as="style" />
-
-  <!-- ========================= FONTS ========================= -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <!-- ========================= STYLES ========================= -->
-  <link rel="stylesheet" href="/static/css/app.css?v=1.0.0" />
-
-  <!-- ========================= STRUCTURED DATA ========================= -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "HIREX",
-    "applicationCategory": "Productivity",
-    "operatingSystem": "Web",
-    "creator": {
-      "@type": "Person",
-      "name": "Sri Akash Kadali",
-      "affiliation": "University of Maryland, College Park"
-    },
-    "description": "AI-powered LaTeX resume optimizer for job-aware, ATS-compliant output.",
-    "url": "https://your-domain.com"
-  }
-  </script>
-
-  <!-- ========================= INLINE STYLES ========================= -->
   <style>
-    :root {
-      --sidebar-width: 220px;
-      --surface-1: rgba(255, 255, 255, 0.06);
-      --surface-2: rgba(255, 255, 255, 0.12);
-      --text-muted: #c0cadb;
-      --brand-bg: #0a1020;
-      --fade-duration: 0.8s;
+    /* ---------- Gradient Text Utility ---------- */
+    .text-gradient {
+      background: linear-gradient(90deg, #ffffff, #9f78ff);
+      background-clip: text;
+      color: transparent;
     }
 
-    body {
-      min-height: 100vh;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      background: var(--brand-bg);
-      color: #fff;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      overflow-x: hidden;
+    /* Desktop sticky sidebar + layout offsets */
+    @media (min-width: 881px){
+      .sidebar{ position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+      main.console { margin-left: 240px; }
+      footer { margin-left: 240px; }
     }
 
-    header.appbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.75rem 1rem;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: saturate(140%) blur(10px);
-      border-bottom: 1px solid var(--surface-2);
-      animation: fadeInDown var(--fade-duration) ease both;
-    }
+    main.console { padding: 2.5rem 2.5rem 5rem 3.5rem; max-width: 960px; }
+    .main-inner { margin: 0; text-align: left; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-weight: 600;
-      text-decoration: none;
-      color: #fff;
-      letter-spacing: 0.5px;
-    }
+    .page-title { text-align: left; font-size: 2rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .muted { text-align: left; max-width: 800px; margin-bottom: 1.75rem; color: var(--text-400); }
 
-    .layout {
-      display: grid;
-      grid-template-columns: var(--sidebar-width) 1fr;
-      min-height: calc(100vh - 56px);
-    }
-
-    aside.sidebar {
-      border-right: 1px solid var(--surface-2);
-      padding: 1rem 0.75rem;
-      background: rgba(255, 255, 255, 0.02);
-      position: sticky;
-      top: 56px;
-      height: calc(100vh - 56px);
-    }
-
-    .vnav {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .vnav a {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.55rem 0.6rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      color: #fff;
-      font-size: 0.95rem;
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    .vnav a:hover { background: rgba(255, 255, 255, 0.08); }
-    .vnav a[aria-current="page"] { background: var(--surface-1); }
-
-    main.console {
-      padding: 1.25rem;
-      overflow-y: auto;
-      max-width: 1024px;
-      margin: 0 auto;
-    }
-
-    .card {
+    section.card {
+      text-align: left;
+      margin-bottom: 2rem;
+      padding: 1.5rem 1.75rem;
       background: var(--surface-1);
       border: 1px solid var(--surface-2);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-      transform: translateY(40px);
-      opacity: 0;
-      transition: transform var(--fade-duration) ease-out, opacity var(--fade-duration) ease-out;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: transform 0.25s var(--ease-out), box-shadow 0.3s var(--ease-out);
     }
-    .card.is-animated { transform: translateY(0); opacity: 1; }
+    section.card:hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(110,168,254,0.25); }
+    section.card h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; }
 
-    h1, h2, h3 { margin: 0 0 0.75rem; }
-    p, li { line-height: 1.6; }
-
-    ul, ol { margin: 0.5rem 0 1rem 1.25rem; padding: 0; }
-
-    .muted { color: var(--text-muted); }
-
-    footer {
-      padding: 1rem;
-      text-align: center;
-      color: var(--text-muted);
-      border-top: 1px solid var(--surface-2);
-      font-size: 0.85rem;
-      animation: fadeInUp var(--fade-duration) ease both;
-      animation-delay: 0.5s;
+    @media (max-width: 880px) {
+      main.console { padding: 1.5rem 1rem 4rem 1.5rem; }
+      section.card { padding: 1.25rem 1.25rem; }
     }
 
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Sidebar Mobile Toggle */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem; left: 1rem;
+      z-index: 1001;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.3rem;
+      width: 42px; height: 42px;
+      display: grid; place-items: center;
+      cursor: pointer;
+    }
+    @media (max-width: 880px) {
+      .menu-toggle { display: grid; }
+      .sidebar {
+        position: fixed;
+        transform: translateX(-100%);
+        transition: transform 0.35s ease;
+        z-index: 999;
+        top: 0; left: 0;
+        width: 70%; max-width: 260px;
+        height: 100vh;
+      }
+      body.nav-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 0 0 40px rgba(0,0,0,0.6);
+      }
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Theme Toggle (handled by ui.js) */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem; right: 1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      border-radius: 50%;
+      width: 42px; height: 42px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      z-index: 1002;
     }
-
-    @media (max-width: 768px) {
-      .layout { grid-template-columns: 1fr; }
-      aside.sidebar { display: none; }
-      main.console { padding: 1rem; }
-    }
-
-    @media (prefers-color-scheme: light) {
-      body { background: #0a1020; color: #fff; }
-      .card { background: rgba(255, 255, 255, 0.06); color: #fff; }
-      .vnav a { color: #fff; }
-      .vnav a[aria-current="page"] { background: rgba(255, 255, 255, 0.1); }
-    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 
-<body data-app="hirex">
+<body class="page-enter" data-app="hirex">
   <a href="#content" class="sr-only">Skip to content</a>
 
-  <!-- ========================= HEADER ========================= -->
-  <header class="appbar" role="banner">
-    <a href="/index.html" class="brand">
-      <img src="/static/assets/logo.png" alt="HIREX Logo" width="48" height="48" />
-      <span>HIREX</span>
-    </a>
-    <span style="flex:1"></span>
-    <div class="top-actions muted">About This Project</div>
-  </header>
+  <!-- ========================= SIDEBAR ========================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/static/assets/logo.png" alt="HIREX Logo" />
+      <span class="logo-text text-gradient">HIREX</span>
+    </div>
+    <ul class="vnav">
+      <li><a href="/index.html">🏠 Home</a></li>
+      <li><a href="/preview.html">📄 Preview</a></li>
+      <li><a href="/about.html" aria-current="page">ℹ️ About</a></li>
+      <li><a href="/help.html">❓ Help</a></li>
+    </ul>
+    <button class="cta-primary" onclick="location.href='/help.html'">Docs</button>
+  </aside>
 
-  <div class="layout">
-    <!-- ========================= SIDEBAR ========================= -->
-    <aside class="sidebar" role="navigation" aria-label="Main Navigation">
-      <h4 class="muted" style="font-size:.8rem;text-transform:uppercase;margin:.5rem 0;">Navigation</h4>
-      <ul class="vnav">
-        <li><a href="/index.html">Home</a></li>
-        <li><a href="/preview.html">Preview</a></li>
-        <li><a href="/about.html" aria-current="page">About</a></li>
-        <li><a href="/help.html">Help</a></li>
-      </ul>
-    </aside>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-pressed="false">🌗</button>
 
-    <!-- ========================= MAIN ========================= -->
-    <main id="content" class="console" role="main">
-      <section class="card anim">
-        <h1>About HIREX</h1>
-        <p class="muted">High Resume eXpert — a Job-Aware Resume Optimizer for LaTeX Professionals.</p>
-      </section>
+  <!-- ========================= MAIN ========================= -->
+  <main class="console" id="content">
+    <div class="main-inner">
+      <h1 class="page-title text-gradient anim rise">About HIREX</h1>
+      <p class="muted">
+        <strong>High Resume eXpert</strong> — A job-aware AI resume optimizer purpose-built for LaTeX users.
+        HIREX aligns your resume to any JD, preserves structure/macros, and offers optional tone refinement.
+      </p>
 
-      <section class="card anim">
-        <h2>Project Overview</h2>
+      <!-- Project Overview -->
+      <section class="card anim blur-rise">
+        <h2 class="text-gradient">Project Overview</h2>
         <p>
-          HIREX intelligently transforms your <strong>LaTeX resume</strong> into a job-specific, ATS-optimized document
-          using OpenAI and Humanize APIs. It ensures factual accuracy, measurable impact, and clarity while keeping
-          all existing company names and durations intact.
+          HIREX transforms your <strong>LaTeX resume</strong> into a job-specific, ATS-optimized document using advanced AI.
+          It ensures factual precision, professional tone, and strong keyword alignment while preserving your original LaTeX structure.
         </p>
-        <ul>
-          <li>🔍 Extracts critical JD keywords and aligns resume sections accordingly.</li>
-          <li>🤖 Refines bullet tone and clarity using AI-driven rewriting (Humanize optional).</li>
-          <li>🧩 Preserves macros, preamble, and Education/Skills sections completely.</li>
-          <li>📄 Generates downloadable <code>.tex</code> and <code>.pdf</code> resumes seamlessly.</li>
+        <ul class="space-y-1">
+          <li>🔍 Extracts key JD terms and intelligently aligns experience bullets.</li>
+          <li>🧑‍💼 Optional <strong>Humanize</strong> for tone/flow polishing (facts unchanged).</li>
+          <li>🧩 Preserves preamble, macros, skills, and education sections intact.</li>
+          <li>📄 Generates downloadable <code>.tex</code> and <code>.pdf</code> outputs.</li>
         </ul>
       </section>
 
-      <section class="card anim">
-        <h2>Architecture</h2>
-        <ol>
-          <li><strong>Frontend:</strong> Responsive HTML/JS interface for upload, optimization, and preview.</li>
-          <li><strong>Backend:</strong> FastAPI engine handling input sanitization, AI calls, and PDF compilation.</li>
-          <li><strong>AI Layer:</strong> OpenAI GPT-4 + Humanize.io for domain-specific optimization and tone refinement.</li>
+      <!-- System Architecture -->
+      <section class="card anim fade">
+        <h2 class="text-gradient">System Architecture</h2>
+        <ol class="space-y-1">
+          <li><strong>Frontend:</strong> Responsive HTML+JS using <em>HIREX UI v1.2.0</em> (glass-neon design), theme persistence, and a modern Humanize switch.</li>
+          <li><strong>Backend:</strong> FastAPI engine for AI inference, LaTeX compilation, and secure file management.</li>
+          <li><strong>Base LaTeX:</strong> Single canonical file <code>data/samples/base_resume.tex</code> used for all runs (no frontend uploads).</li>
+          <li><strong>AI Layer:</strong> GPT-based optimizer + optional Humanize provider for tone calibration.</li>
         </ol>
+        <p class="muted" style="margin-top:.5rem">
+          The architecture prioritizes accuracy, transparency, and privacy — no unnecessary data leaves your environment.
+        </p>
       </section>
 
-      <section class="card anim">
-        <h2>Credits</h2>
-        <ul>
+      <!-- Credits -->
+      <section class="card anim rise">
+        <h2 class="text-gradient">Credits</h2>
+        <ul class="space-y-1">
           <li>👨‍💻 <strong>Developer:</strong> Sri Akash Kadali</li>
           <li>🏫 <strong>Institution:</strong> University of Maryland, College Park</li>
-          <li>🧠 <strong>Concept:</strong> Job-aware resume optimization inspired by ATS and hiring manager evaluation workflows.</li>
+          <li>🧠 <strong>Concept:</strong> Job-aware optimization inspired by recruiter scoring & ATS ranking systems.</li>
           <li>⚙️ <strong>Stack:</strong> FastAPI · Python · LaTeX · OpenAI API · Humanize API · HTML · JS · CSS</li>
         </ul>
       </section>
 
-      <section class="card anim">
-        <h2>License</h2>
+      <!-- License -->
+      <section class="card anim blur-rise">
+        <h2 class="text-gradient">License</h2>
         <p>
-          HIREX is distributed under the <strong>MIT License</strong>.<br/>
-          You are free to use, modify, and distribute it for personal, academic, or open-source purposes.
+          HIREX is released under the <strong>MIT License</strong>.<br />
+          Free for personal, academic, and open-source use. Attribution is appreciated.
         </p>
       </section>
-    </main>
-  </div>
+    </div>
+  </main>
 
   <!-- ========================= FOOTER ========================= -->
-  <footer role="contentinfo" class="anim">
-    <p>&copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong> | Powered by FastAPI + LaTeX</p>
-    <p class="muted">
-      Build v1.0.0 |
-      <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
-    </p>
+  <footer>
+    &copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong> |
+    Powered by <strong>FastAPI</strong> + <strong>LaTeX</strong> |
+    <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
   </footer>
 
-  <!-- ========================= SCRIPTS ========================= -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".card").forEach(c => c.classList.add("is-animated"));
-    });
-  </script>
-  <script src="/static/js/ui.js" defer></script>
+  <!-- ========================= TOAST + SCRIPTS ========================= -->
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/js/util.js?v=1.2.0" defer></script>
+  <script src="/static/js/ui.js?v=1.2.0" defer></script>
 </body>
 </html>

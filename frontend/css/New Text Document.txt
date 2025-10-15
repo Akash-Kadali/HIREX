@@ -1,20 +1,20 @@
 /* ============================================================
-   HIREX • components.css (v1.1.0 — Unified Neon Component System)
+   HIREX • components.css (v2.6.0 — Futuristic Neon System)
    ------------------------------------------------------------
+   • Replaces VISDOM legacy design
    • Sidebar-ready neon components
-   • Gradient text + glass surfaces
-   • Responsive + accessibility safe
+   • Glass gradients + gradient typography
+   • Safe background-clip for gradient text
    Author: Sri Akash Kadali
    ============================================================ */
 
 /* ========================= SIDEBAR ========================= */
 nav {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   width: 240px;
   height: 100vh;
-  background: rgba(10,16,32,0.85);
+  background: rgba(10,16,32,0.8);
   backdrop-filter: blur(14px) saturate(160%);
   border-right: 1px solid var(--surface-2);
   display: flex;
@@ -23,7 +23,6 @@ nav {
   padding: 1.75rem 0;
   box-shadow: inset -2px 0 20px rgba(0,0,0,.4), 0 0 22px rgba(110,168,254,.12);
   z-index: 1000;
-  transition: background .4s var(--ease-out), border-color .4s var(--ease-out);
 }
 
 /* --- Brand --- */
@@ -35,8 +34,7 @@ nav {
   margin-bottom: 2rem;
 }
 .nav-left img {
-  height: 70px;
-  width: 70px;
+  height: 70px; width: 70px;
   border-radius: 50%;
   background: rgba(255,255,255,0.05);
   padding: .5rem;
@@ -46,9 +44,9 @@ nav {
   font: 800 1.35rem/1 "Poppins", sans-serif;
   text-transform: uppercase;
   letter-spacing: .05em;
-  background: linear-gradient(90deg,#ffffff,#9f78ff);
-  -webkit-background-clip: text;
+  background: linear-gradient(90deg,#fff,#9f78ff);
   background-clip: text;
+  -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 16px rgba(110,168,254,.25);
@@ -75,8 +73,7 @@ nav ul a {
   text-decoration: none;
   transition: background .3s var(--ease-out),
               transform .25s var(--ease-out),
-              color .25s var(--ease-out),
-              box-shadow .25s var(--ease-out);
+              color .25s var(--ease-out);
 }
 nav ul a:hover {
   background: rgba(110,168,254,0.15);
@@ -84,8 +81,7 @@ nav ul a:hover {
   transform: translateX(5px);
   box-shadow: 0 0 12px rgba(110,168,254,.2);
 }
-nav ul a[aria-current="page"],
-nav ul a.active-link {
+nav ul a[aria-current="page"] {
   background: linear-gradient(90deg, rgba(110,168,254,0.25), rgba(110,168,254,0.08));
   border-left: 3px solid var(--accent);
   color: #fff;
@@ -113,19 +109,16 @@ nav ul a.active-link {
 /* --- Responsive Sidebar Collapse --- */
 @media (max-width: 860px) {
   nav {
-    position: fixed;
-    transform: translateX(-100%);
-    width: 220px;
-    height: 100%;
-    flex-direction: column;
-    transition: transform .35s var(--ease-out);
-    z-index: 999;
+    position: static;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    border-right: none;
+    border-bottom: 1px solid var(--surface-2);
   }
-  body.nav-open nav {
-    transform: translateX(0);
-    box-shadow: 0 0 40px rgba(0,0,0,0.6);
-  }
-  nav ul { gap: 1rem; }
+  nav ul { flex-direction: row; justify-content: center; }
   .cta-nav-button { display: none; }
 }
 
@@ -136,8 +129,8 @@ h1.page-title {
   margin-block: 1.25rem .75rem;
   letter-spacing: -0.02em;
   background: linear-gradient(90deg,#ffffff,#9f78ff);
-  -webkit-background-clip: text;
   background-clip: text;
+  -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 22px rgba(110,168,254,.25);
@@ -177,7 +170,7 @@ section, .card {
   margin-block: 1.25rem 2rem;
 }
 
-.cta-primary, .cta-secondary, .cta-accent {
+.cta-primary, .cta-secondary {
   font: 700 1rem/1 "Outfit", sans-serif;
   min-inline-size: clamp(200px,28vw,240px);
   text-align: center;
@@ -232,7 +225,6 @@ footer {
   border-top: 1px solid var(--surface-2);
   background: rgba(10,16,32,.65);
   backdrop-filter: blur(6px);
-  transition: background .4s var(--ease-out);
 }
 footer a {
   color: var(--accent);
@@ -247,12 +239,11 @@ footer a:hover { opacity: .85; }
   left: 50%;
   bottom: -100px;
   transform: translateX(-50%) scale(.95);
-  background: rgba(110,168,254,0.15);
-  color: #fff;
+  background: linear-gradient(180deg,#eafff8,#b8ffe8);
+  color: #0a1020;
   padding: .75rem 1.25rem;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.25);
-  backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
   opacity: 0;
   z-index: 9999;
@@ -260,8 +251,8 @@ footer a:hover { opacity: .85; }
               bottom .45s var(--ease-out),
               transform .45s var(--ease-out);
 }
-#toast.visible {
-  bottom: 28px;
+#toast.show {
+  bottom: 24px;
   opacity: 1;
   transform: translateX(-50%) scale(1);
 }

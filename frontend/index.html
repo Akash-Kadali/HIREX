@@ -1,225 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <!-- ========================= META ========================= -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0a1020" />
 
-  <!-- ========================= SEO ========================= -->
-  <title>HIREX — High Resume eXpert</title>
-  <meta name="description" content="HIREX is an AI-powered LaTeX resume optimizer that transforms your resume and job description into a job-aligned, ATS-safe format." />
-  <meta name="keywords" content="HIREX, resume optimizer, LaTeX resume, AI resume, job matching, ATS resume builder, humanize resume" />
+  <title>HIREX — High Resume eXpert v1.1.0</title>
+  <meta name="description" content="AI-powered LaTeX resume optimizer for job-aligned, ATS-safe output." />
   <meta name="author" content="Sri Akash Kadali" />
 
-  <!-- ========================= ICONS ========================= -->
   <link rel="icon" type="image/png" href="/static/assets/favicon.png" />
-  <link rel="apple-touch-icon" href="/static/assets/favicon.png" />
-
-  <!-- ========================= STYLES ========================= -->
-  <link rel="stylesheet" href="/static/css/app.css?v=1.0.0" />
+  <!-- ✅ Unified Styles (v1.1.0) -->
+  <link rel="stylesheet" href="/static/css/base.css?v=1.1.0" />
+  <link rel="stylesheet" href="/static/css/animations.css?v=1.1.0" />
+  <link rel="stylesheet" href="/static/css/app.css?v=1.1.0" />
 
   <style>
-    :root {
-      --sidebar-width: 220px;
-      --surface-1: rgba(255,255,255,0.06);
-      --surface-2: rgba(255,255,255,0.12);
-      --text-muted: #c0cadb;
-      --brand-bg: #0a1020;
+    /* ----------- New Elements ----------- */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, #6ea8fe, #9f78ff);
+      transition: width .35s ease;
+      z-index: 2000;
     }
 
-    body {
-      min-height: 100vh;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      background: var(--brand-bg);
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      overflow-x: hidden;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background .25s ease;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+    @media (max-width: 880px) {
+      .theme-toggle { right: .75rem; top: .75rem; }
     }
 
-    header.appbar {
-      position: sticky; top: 0;
-      display: flex; align-items: center;
-      gap: 1rem; padding: 0.75rem 1rem;
-      background: rgba(0,0,0,0.35);
-      backdrop-filter: saturate(140%) blur(10px);
-      border-bottom: 1px solid var(--surface-2);
-      z-index: 100;
+    /* Sidebar Mobile Toggle */
+    .menu-toggle {
+      display: none;
+      font-size: 1.4rem;
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
     }
-
-    .brand {
-      display: flex; align-items: center; gap: 0.6rem;
-      font-weight: 600; color: #fff; text-decoration: none;
-    }
-
-    .layout { display: grid; grid-template-columns: var(--sidebar-width) 1fr; min-height: calc(100vh - 56px); }
-    aside.sidebar { border-right: 1px solid var(--surface-2); padding: 1rem 0.75rem; background: rgba(255,255,255,0.02); }
-
-    .vnav { list-style: none; padding: 0; margin: 0; }
-    .vnav a {
-      display: flex; align-items: center; gap: 0.6rem;
-      padding: 0.55rem 0.6rem; border-radius: 0.5rem;
-      text-decoration: none; color: #fff; font-size: 0.95rem;
-      transition: background .2s ease;
-    }
-    .vnav a:hover { background: rgba(255,255,255,0.08); }
-    .vnav a[aria-current="page"] { background: var(--surface-1); }
-
-    main.console { padding: 1.25rem; max-width: 1024px; margin: 0 auto; }
-
-    .card {
-      background: var(--surface-1);
-      border: 1px solid var(--surface-2);
-      border-radius: 12px;
-      padding: 1.25rem; margin-bottom: 1.25rem;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-    }
-
-    input, textarea {
-      width: 100%; margin-top: .25rem;
-      padding: .6rem .8rem; border-radius: 8px;
-      border: 1px solid var(--surface-2);
-      background: rgba(255,255,255,0.05); color: #fff;
-      font-size: 0.95rem; transition: border-color .2s ease;
-    }
-    input:focus, textarea:focus { border-color: #6a4fff; outline: none; }
-
-    button {
-      cursor: pointer; border: none; border-radius: 8px;
-      padding: 0.6rem 1rem; font-weight: 600; transition: .2s ease;
-    }
-    .cta-primary { background: linear-gradient(135deg,#4f8cff,#6a4fff); color:#fff; }
-    .cta-secondary { background: rgba(255,255,255,0.1); color:#fff; }
-
-    /* 🧠 Modern Toggle Switch */
-    .toggle-container {
-      display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none;
-    }
-    .switch {
-      position: relative; display: inline-block; width: 52px; height: 28px;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #555; transition: 0.4s;
-      border-radius: 28px;
-    }
-    .slider:before {
-      position: absolute; content: "";
-      height: 22px; width: 22px; left: 3px; bottom: 3px;
-      background-color: white; transition: 0.4s; border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    input:checked + .slider { background: linear-gradient(135deg,#4f8cff,#6a4fff); }
-    input:checked + .slider:before { transform: translateX(24px); }
-    .toggle-label { font-size: 0.95rem; color: #fff; font-weight: 500; }
-
-    footer {
-      padding: 1rem; text-align:center; color: var(--text-muted);
-      border-top: 1px solid var(--surface-2); font-size: 0.85rem;
-    }
-
-    .toast {
-      position: fixed; bottom: 1.25rem; right: 1.25rem;
-      background:#1a1f35; color:white;
-      padding:0.75rem 1rem; border-radius:8px;
-      display:none; z-index:999;
-    }
-
-    @media(max-width:768px){
-      .layout{ grid-template-columns:1fr; }
-      aside.sidebar{ display:none; }
-      main.console{ padding:1rem; }
+    @media (max-width: 880px) {
+      .menu-toggle { display: block; }
+      body.nav-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 0 0 40px rgba(0,0,0,0.6);
+      }
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        transform: translateX(-100%);
+        transition: transform .35s ease;
+        width: 70%;
+        max-width: 260px;
+        height: 100vh;
+        z-index: 999;
+      }
     }
   </style>
 </head>
 
-<body data-app="hirex">
-  <!-- ========================= HEADER ========================= -->
-  <header class="appbar" role="banner">
-    <a href="/index.html" class="brand">
-      <img src="/static/assets/logo.png" alt="HIREX Logo" width="48" height="48" />
-      <span>HIREX</span>
-    </a>
-    <span style="flex:1"></span>
-    <div class="top-actions muted">AI-Powered LaTeX Resume Optimizer</div>
-  </header>
+<body class="page-enter" data-app="hirex">
+  <div id="progress-bar"></div>
 
-  <div class="layout">
-    <!-- ========================= SIDEBAR ========================= -->
-    <aside class="sidebar" role="navigation" aria-label="Main Navigation">
-      <h4 class="muted" style="font-size:.8rem;text-transform:uppercase;margin:.5rem 0;">Navigation</h4>
-      <ul class="vnav">
-        <li><a href="/index.html" aria-current="page">Home</a></li>
-        <li><a href="/preview.html">Preview</a></li>
-        <li><a href="/about.html">About</a></li>
-        <li><a href="/help.html">Help</a></li>
-      </ul>
-    </aside>
+  <!-- ========================= SIDEBAR ========================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/static/assets/logo.png" alt="HIREX Logo" />
+      <span class="logo-text">HIREX</span>
+    </div>
+    <ul class="vnav">
+      <li><a href="/index.html" aria-current="page">🏠 Home</a></li>
+      <li><a href="/preview.html">📄 Preview</a></li>
+      <li><a href="/about.html">ℹ️ About</a></li>
+      <li><a href="/help.html">❓ Help</a></li>
+    </ul>
+    <button class="cta-primary">Get Started</button>
+  </aside>
 
-    <!-- ========================= MAIN ========================= -->
-    <main id="content" class="console" role="main">
-      <section class="card anim">
-        <h1>Job-Aware Resume Optimizer</h1>
-        <p class="muted">
-          Upload your <strong>.tex</strong> resume and paste the job description.<br/>
-          HIREX will auto-detect the company and role, optimize bullet points, and optionally refine tone with Humanize AI.
-        </p>
-      </section>
+  <button class="menu-toggle" id="menuToggle">☰</button>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌗</button>
 
-      <section class="card anim">
-        <form id="optimize-form" novalidate>
+  <!-- ========================= MAIN ========================= -->
+  <main class="console" id="content">
+    <div class="main-inner">
+      <h1 class="page-title anim rise">High Resume eXpert</h1>
+      <p class="muted">
+        Upload your <strong>.tex</strong> resume and paste the job description.<br />
+        HIREX auto-detects the company and role, optimizes bullet points, and can optionally refine tone with Humanize AI.
+      </p>
+
+      <section class="card anim blur-rise">
+        <form id="optimize-form" class="space-y-4" novalidate>
           <div class="field">
-            <label for="resume"><strong>Base Resume (.tex)</strong></label>
+            <label for="resume">Base Resume (.tex)</label>
             <input type="file" id="resume" name="resume" accept=".tex" required />
           </div>
 
-          <div class="field" style="margin-top:1rem;">
-            <label for="jd"><strong>Job Description</strong></label>
-            <textarea id="jd" name="jd" rows="8" placeholder="Paste the full job description here..." required></textarea>
+          <div class="field">
+            <label for="jd">Job Description</label>
+            <textarea id="jd" name="jd" rows="8" placeholder="Paste the full job description here…" required></textarea>
           </div>
 
-          <div class="field" style="margin-top:1rem;">
-            <div class="toggle-container">
-              <label class="switch">
-                <input type="checkbox" id="use_humanize" />
-                <span class="slider"></span>
-              </label>
-              <span class="toggle-label">Apply Humanize AI (tone refinement)</span>
-            </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:.5rem;">
+              <input type="checkbox" id="use_humanize" />
+              Apply Humanize AI (tone refinement)
+            </label>
           </div>
 
-          <div style="margin-top:1.25rem;display:flex;gap:.8rem;flex-wrap:wrap;">
-            <button type="submit" class="cta-primary">Optimize Resume</button>
+          <div class="cta-container">
+            <button type="submit" class="cta-primary">🚀 Optimize Resume</button>
             <button type="reset" class="cta-secondary">Reset</button>
           </div>
         </form>
       </section>
 
-      <section class="card anim muted">
-        <p>⚙️ Once optimized, view and download both versions on the <a href="/preview.html">Preview</a> page.</p>
+      <section class="card anim fade">
+        <p>
+          ⚙️ Once optimized, view and download both versions on the
+          <a class="special-link" href="/preview.html">Preview</a> page.
+        </p>
       </section>
-    </main>
-  </div>
+    </div>
+  </main>
 
-  <!-- ========================= TOAST + FOOTER ========================= -->
-  <div id="toast" class="toast" role="status" aria-live="polite">Ready.</div>
-
-  <footer role="contentinfo">
-    <p>&copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong></p>
-    <p class="muted">
-      Build v1.0.0 |
-      <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
-    </p>
+  <!-- ========================= FOOTER ========================= -->
+  <footer>
+    &copy; 2025 <strong>HIREX</strong> — Developed by <strong>Sri Akash Kadali</strong> |
+    Powered by <strong>FastAPI</strong> + <strong>LaTeX</strong> |
+    <a href="https://github.com/Akash-Kadali" target="_blank" rel="noopener">GitHub</a>
   </footer>
 
-  <!-- ========================= SCRIPTS ========================= -->
-  <script src="/static/js/util.js" defer></script>
-  <script src="/static/js/ui.js" defer></script>
-  <script src="/static/js/main.js" defer></script>
+  <!-- ========================= TOAST + SCRIPTS ========================= -->
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/js/util.js?v=1.1.0" defer></script>
+  <script src="/static/js/ui.js?v=1.1.0" defer></script>
+  <script src="/static/js/main.js?v=1.1.0" defer></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // ---------- Sidebar Toggle ----------
+      const menuToggle = document.getElementById("menuToggle");
+      menuToggle?.addEventListener("click", () => {
+        document.body.classList.toggle("nav-open");
+      });
+
+      // ---------- Theme Toggle ----------
+      const themeToggle = document.getElementById("themeToggle");
+      themeToggle?.addEventListener("click", () => {
+        const html = document.documentElement;
+        const current = html.getAttribute("data-theme") || "dark";
+        const next = current === "dark" ? "light" : "dark";
+        html.setAttribute("data-theme", next);
+        localStorage.setItem("hirex-theme", next);
+        HIREX?.toast?.(`🌗 Switched to ${next} mode`);
+      });
+
+      // ---------- Progress Bar Simulation ----------
+      const form = document.getElementById("optimize-form");
+      const bar = document.getElementById("progress-bar");
+      form?.addEventListener("submit", () => {
+        bar.style.width = "15%";
+        let p = 15;
+        const interval = setInterval(() => {
+          p = Math.min(95, p + Math.random() * 10);
+          bar.style.width = p + "%";
+        }, 400);
+        document.addEventListener("hirex-finish", () => {
+          clearInterval(interval);
+          bar.style.width = "100%";
+          setTimeout(() => (bar.style.width = "0%"), 1200);
+        }, { once: true });
+      });
+
+      // ---------- Debug ----------
+      HIREX?.debugLog?.("INDEX PAGE LOADED", {
+        version: "v1.1.0",
+        layout: "app.css"
+      });
+    });
+  </script>
 </body>
 </html>

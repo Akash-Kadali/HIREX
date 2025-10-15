@@ -1,197 +1,238 @@
 /* ============================================================
-   HIREX • preview.js (Final LaTeX + PDF Viewer)
-   Displays optimized LaTeX output and both original + humanized PDFs.
-   Shows JD Fit Score from 2nd GPT loop (if present).
-   Allows copy, download, and inline PDF preview.
+   HIREX • preview.js (v1.2.0 — Adaptive PDF + LaTeX Viewer)
+   ------------------------------------------------------------
+   Features:
+   • Displays Optimized + Humanized PDFs dynamically
+   • Updates JD Fit Score gauge + tier + rounds
+   • Copy / download LaTeX with safe filenames
+   • Theme-aware styling + cache version check
+   • Uses global HIREX utilities (ui.js + util.js)
    Author: Sri Akash Kadali
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-  const texOutput = document.getElementById("tex-output");
-  const toast = document.getElementById("toast");
-  const btnDownloadTex = document.getElementById("download-tex");
-  const pdfContainer = document.getElementById("pdf-container");
-  const pageContent = document.getElementById("content") || document.body;
+  const PREVIEW_VERSION = "v1.2.0";
 
-  /* ============================================================
-     🧠 Toast Utility
-     ============================================================ */
-  function showToast(message, timeout = 2500) {
-    if (!toast) return alert(message);
-    toast.textContent = message;
-    toast.style.display = "block";
-    toast.style.opacity = "1";
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      setTimeout(() => (toast.style.display = "none"), 300);
-    }, timeout);
+  // ----------------- Elements -----------------
+  const texOutput = document.getElementById("tex-output");
+  const pdfContainer = document.getElementById("pdf-container");
+  const btnDownloadTex = document.getElementById("download-tex");
+  const copyBtn = document.getElementById("copy-tex");
+
+  const fitCircle = document.getElementById("fitCircle");
+  const fitTierEl = document.getElementById("fit-tier");
+  const fitRoundsEl = document.getElementById("fit-rounds");
+
+  // ----------------- Helpers -----------------
+  const toast = (msg, t = 2800) => (window.HIREX?.toast ? HIREX.toast(msg, t) : alert(msg));
+  const debug = (msg, data) => window.HIREX?.debugLog?.(msg, data);
+
+  const getTS = () => (window.HIREX?.getTimestamp ? HIREX.getTimestamp() : new Date().toISOString().replace(/[:.]/g, "-"));
+  const sanitize = (name) => (window.HIREX?.sanitizeFilename ? HIREX.sanitizeFilename(name) : String(name || "file").replace(/[\\/:*?"<>|]+/g, "_"));
+  const b64ToBlob = (b64, mime) => (window.HIREX?.base64ToBlob ? HIREX.base64ToBlob(b64, mime) :
+    new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: mime || "application/octet-stream" }));
+  const downloadText = (name, text) => (window.HIREX?.downloadTextFile ? HIREX.downloadTextFile(name, text) : downloadFallback(name, new Blob([text], { type: "text/plain" })));
+  const downloadBlob = (name, blob) => (window.HIREX?.downloadFile ? HIREX.downloadFile(name, blob) : downloadFallback(name, blob));
+  function downloadFallback(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
   }
 
-  /* ============================================================
-     💾 Load from localStorage
-     ============================================================ */
+  // ----------------- Load cached data -----------------
   const texString = localStorage.getItem("hirex_tex") || "";
   const pdfB64 = localStorage.getItem("hirex_pdf") || "";
   const pdfB64Humanized = localStorage.getItem("hirex_pdf_humanized") || "";
-  const company = (localStorage.getItem("hirex_company") || "Company").replace(/\s+/g, "_");
-  const role = (localStorage.getItem("hirex_role") || "Role").replace(/\s+/g, "_");
-  const texLen = texString.length;
+  const companyRaw = localStorage.getItem("hirex_company") || "Company";
+  const roleRaw = localStorage.getItem("hirex_role") || "Role";
+  const appCacheVersion = localStorage.getItem("hirex_version") || "v1.0.0";
 
-  // 2nd Loop scoring (if present)
-  const ratingScoreRaw = localStorage.getItem("hirex_rating_score") || "";
-  const ratingHistoryRaw = localStorage.getItem("hirex_rating_history") || "[]";
-  let ratingScore = parseInt(ratingScoreRaw || "0", 10);
-  let ratingRounds = 0;
-  try { ratingRounds = JSON.parse(ratingHistoryRaw)?.length || 0; } catch {}
+  // filename parts
+  const company = sanitize(companyRaw).replace(/\s+/g, "_");
+  const role = sanitize(roleRaw).replace(/\s+/g, "_");
 
-  HIREX?.debugLog?.("PREVIEW INIT", {
-    hasTex: !!texString.trim(),
-    hasPdf: !!pdfB64,
-    hasPdfHumanized: !!pdfB64Humanized,
-    texLen,
-    company,
-    role,
-    ratingScore,
-    ratingRounds,
-  });
-
-  /* ============================================================
-     🎯 JD Fit Score Card (if available)
-     ============================================================ */
-  if (!Number.isNaN(ratingScore) && ratingScore > 0) {
-    const scoreCard = document.createElement("section");
-    scoreCard.className = "card";
-    scoreCard.style.marginBottom = "1rem";
-    scoreCard.innerHTML = `
-      <h2>🎯 JD Fit Score</h2>
-      <p class="muted">Optimized in ${ratingRounds || 1} round(s)</p>
-      <p style="font-size:2.25rem;margin:.25rem 0;font-weight:800;">${ratingScore}/100</p>
-    `;
-    pageContent.prepend(scoreCard);
+  // Cache version check
+  if (appCacheVersion !== PREVIEW_VERSION) {
+    console.warn("[HIREX] Cache version mismatch:", appCacheVersion, "≠", PREVIEW_VERSION);
+    toast("⚠️ Old cache detected. Consider re-optimizing.");
   }
 
-  /* ============================================================
-     📄 Render LaTeX
-     ============================================================ */
+  // ----------------- Rating / Fit Gauge -----------------
+  let ratingScore = Number.parseInt(localStorage.getItem("hirex_rating_score") || "", 10);
+  let ratingRounds = 0;
+  try {
+    const hist = JSON.parse(localStorage.getItem("hirex_rating_history") || "[]");
+    ratingRounds = Array.isArray(hist) ? hist.length : 0;
+    if ((!ratingScore || Number.isNaN(ratingScore)) && hist.length && typeof hist.at(-1)?.coverage === "number") {
+      ratingScore = Math.round(hist.at(-1).coverage * 100);
+    }
+  } catch { /* ignore */ }
+
+  if (fitCircle) {
+    const tier =
+      (ratingScore ?? 0) >= 90 ? "Excellent" :
+      (ratingScore ?? 0) >= 75 ? "Strong" :
+      (ratingScore ?? 0) >= 60 ? "Moderate" :
+      (ratingScore ?? 0) > 0 ? "Low" : "Awaiting Analysis…";
+
+    fitCircle.setAttribute("data-score", Number.isFinite(ratingScore) ? ratingScore : "--");
+    if (fitTierEl) fitTierEl.textContent = tier;
+    if (fitRoundsEl) fitRoundsEl.textContent = ratingRounds || 1;
+  }
+
+  // ----------------- Render LaTeX -----------------
   if (texOutput) {
-    texOutput.style.whiteSpace = "pre-wrap";
-    texOutput.style.color = "#fff";
-    texOutput.style.lineHeight = "1.55";
-    texOutput.style.fontFamily = '"Fira Code", monospace';
-    texOutput.style.fontSize = "0.9rem";
+    Object.assign(texOutput.style, {
+      whiteSpace: "pre-wrap",
+      color: "var(--text-100)",
+      lineHeight: "1.6",
+      fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontSize: "0.9rem",
+      padding: "1rem",
+      borderRadius: "8px",
+      background: "rgba(255,255,255,0.03)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      boxShadow: "0 0 20px rgba(110,168,254,0.1)",
+    });
 
     if (texString.trim()) {
-      texOutput.innerText = texString;
-      showToast("✅ Optimized LaTeX loaded successfully.");
+      texOutput.textContent = texString;
+      toast("✅ Optimized LaTeX loaded.");
     } else {
-      texOutput.innerText =
-        "% ⚠️ No optimized LaTeX found.\n% Return to Home and re-run optimization.";
-      showToast("⚠️ No LaTeX found in cache.");
+      texOutput.textContent = "% ⚠️ No optimized LaTeX found.\n% Re-run optimization from Home page.";
+      toast("⚠️ No LaTeX found in cache.");
     }
   }
 
-  /* ============================================================
-     📋 Copy LaTeX to Clipboard
-     ============================================================ */
-  const copyButton = document.createElement("button");
-  copyButton.textContent = "📋 Copy LaTeX";
-  copyButton.className = "cta-primary";
-  copyButton.style.marginTop = "1rem";
-
-  copyButton.addEventListener("click", async () => {
-    if (!texString.trim()) return showToast("⚠️ No LaTeX data to copy!");
+  // Copy LaTeX
+  copyBtn?.addEventListener("click", async () => {
+    if (!texString.trim()) return toast("⚠️ No LaTeX to copy!");
     try {
-      await navigator.clipboard.writeText(texString);
-      showToast("✅ LaTeX copied to clipboard!");
-    } catch (err) {
-      console.error("[HIREX] Clipboard error:", err);
-      showToast("⚠️ Unable to copy to clipboard.");
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(texString);
+        toast("✅ LaTeX copied to clipboard!");
+      } else {
+        // fallback: create hidden textarea
+        const ta = document.createElement("textarea");
+        ta.value = texString; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy"); ta.remove();
+        toast("✅ LaTeX copied to clipboard!");
+      }
+    } catch (e) {
+      console.error("Clipboard error:", e);
+      toast("❌ Clipboard permission denied.");
     }
   });
 
-  texOutput?.parentElement?.appendChild(copyButton);
-
-  /* ============================================================
-     ⬇️ Download .tex File
-     ============================================================ */
+  // Download .tex
   btnDownloadTex?.addEventListener("click", () => {
-    if (!texString.trim()) return showToast("⚠️ No LaTeX data found!");
-    try {
-      const blob = new Blob([texString], { type: "text/plain" });
-      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      const filename = `HIREX_Resume_${company}_${role}_${ts}.tex`;
-      HIREX.downloadFile(filename, blob, "text/plain");
-      showToast("⬇️ Downloading .tex file...");
-    } catch (err) {
-      console.error("[HIREX] TEX download error:", err);
-      showToast("❌ Unable to download LaTeX file.");
-    }
+    if (!texString.trim()) return toast("⚠️ No LaTeX data found!");
+    const filename = sanitize(`HIREX_Resume_${company}_${role}_${getTS()}.tex`);
+    downloadText(filename, texString);
+    toast("⬇️ Downloading .tex file…");
   });
 
-  /* ============================================================
-     🧾 Render PDF Previews (Original + Humanized)
-     ============================================================ */
-  function renderPDFSection(label, base64, suffix = "") {
-    if (!base64) return "";
-    const blob = HIREX.base64ToBlob(base64, "application/pdf");
-    const url = URL.createObjectURL(blob);
-    const filename = `HIREX_Resume_${company}_${role}${suffix}_${HIREX.getTimestamp()}.pdf`;
+  // ----------------- Render PDFs -----------------
+  const objectUrls = [];
 
+  function objectURLFromBase64PDF(b64) {
+    const blob = b64ToBlob(b64, "application/pdf");
+    const url = URL.createObjectURL(blob);
+    objectUrls.push(url);
+    return url;
+  }
+
+  function createPDFCard(title, b64, suffix = "") {
+    if (!b64) return "";
+    const url = objectURLFromBase64PDF(b64);
+    const filename = sanitize(`HIREX_Resume_${company}_${role}${suffix}_${getTS()}.pdf`);
     return `
-      <div class="card">
-        <h2>${label}</h2>
-        <object data="${url}" type="application/pdf" width="100%" height="750px"></object>
-        <div style="margin-top:1rem;display:flex;gap:.8rem;">
-          <button class="cta-primary" data-url="${url}" data-filename="${filename}">⬇️ Download PDF</button>
+      <div class="pdf-card anim fade">
+        <h3>${title}</h3>
+        <div class="pdf-frame">
+          <iframe src="${url}#view=FitH" loading="lazy" title="${title}"></iframe>
+        </div>
+        <div class="pdf-download">
+          <button data-url="${url}" data-filename="${filename}" class="cta-primary">
+            ⬇️ Download PDF
+          </button>
         </div>
       </div>
     `;
   }
 
-  let pdfHtml = "";
-  if (pdfB64) pdfHtml += renderPDFSection("Original Optimized Resume", pdfB64, "");
-  if (pdfB64Humanized)
-    pdfHtml += renderPDFSection("Humanized Resume", pdfB64Humanized, "_Humanized");
+  let pdfHTML = "";
+  if (pdfB64) pdfHTML += createPDFCard("Original Optimized Resume", pdfB64);
+  if (pdfB64Humanized) pdfHTML += createPDFCard("Humanized Resume (Tone-Refined)", pdfB64Humanized, "_Humanized");
+  if (!pdfHTML) {
+    pdfHTML = `<p class="muted" style="text-align:center;margin-top:2rem;">
+      ⚠️ No PDF found. Please optimize a resume first.</p>`;
+  }
+  if (pdfContainer) pdfContainer.innerHTML = pdfHTML;
 
-  if (!pdfHtml)
-    pdfHtml = "<p class='muted'>⚠️ No PDF available. Please run optimization first.</p>";
-
-  pdfContainer.innerHTML = pdfHtml;
-
-  pdfContainer.addEventListener("click", (e) => {
-    if (e.target.matches("button[data-filename]")) {
-      const filename = e.target.dataset.filename;
-      const url = e.target.dataset.url;
-      fetch(url)
-        .then((r) => r.blob())
-        .then((blob) => {
-          HIREX.downloadFile(filename, blob, "application/pdf");
-          showToast(`⬇️ Downloading ${filename.includes("Humanized") ? "Humanized" : "Original"} Resume...`);
-          setTimeout(() => URL.revokeObjectURL(url), 1500);
-        })
-        .catch((err) => {
-          console.error("[HIREX] PDF download error:", err);
-          showToast("❌ Unable to download PDF.");
-        });
+  // PDF Download click handler
+  pdfContainer?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-filename]");
+    if (!btn) return;
+    const { filename, url } = btn.dataset;
+    try {
+      const blob = await fetch(url).then((r) => r.blob());
+      downloadBlob(filename, blob);
+      toast(`⬇️ Downloading ${filename.includes("Humanized") ? "Humanized" : "Optimized"} PDF…`);
+    } catch (err) {
+      console.error("[HIREX] PDF download error:", err);
+      toast("❌ Failed to download PDF.");
     }
   });
 
-  /* ============================================================
-     ✅ Initialization Log
-     ============================================================ */
+  // ----------------- Humanize state awareness -----------------
+  // If the user flips Humanize ON/OFF on another tab / page, hint which card to prefer
+  const highlightActiveMode = (on) => {
+    const cards = pdfContainer?.querySelectorAll(".pdf-card") || [];
+    cards.forEach((c) => c.classList.remove("preferred"));
+    // prefer humanized card when on==true, else the optimized card
+    const selector = on ? "h3:contains('Humanized')" : "h3:contains('Original Optimized')";
+    // :contains is not standard -> manual scan:
+    cards.forEach((c) => {
+      const h3 = c.querySelector("h3");
+      const isHuman = /Humanized/i.test(h3?.textContent || "");
+      const prefer = on ? isHuman : !isHuman;
+      if (prefer) c.classList.add("preferred");
+    });
+  };
+
+  const initialHumanizeOn = window.HIREX?.getHumanizeState ? HIREX.getHumanizeState() : (localStorage.getItem("hirex-use-humanize") === "on");
+  highlightActiveMode(initialHumanizeOn);
+  window.HIREX?.onHumanizeChange?.(highlightActiveMode);
+  window.addEventListener("hirex:humanize-change", (e) => highlightActiveMode(!!e.detail?.on));
+
+  // ----------------- Theme reactivity (optional polish) -----------------
+  window.addEventListener("hirex:theme-change", () => {
+    // if you need to force a repaint of iframes or adjust borders, do it here
+    // (current CSS variables should already handle colors)
+  });
+
+  // ----------------- Cleanup -----------------
+  window.addEventListener("beforeunload", () => {
+    objectUrls.forEach((u) => URL.revokeObjectURL(u));
+  });
+
+  // ----------------- Init Log -----------------
   console.log(
-    "%c[HIREX] preview.js (Final Viewer with Dual PDF + Humanize + JD Fit Score) initialized.",
-    "color:#4f8cff;font-weight:bold;"
+    `%c[HIREX] preview.js initialized — ${PREVIEW_VERSION} (Adaptive Viewer)`,
+    "color:#6ea8fe;font-weight:bold;"
   );
 
-  HIREX?.debugLog?.("PREVIEW READY", {
-    texLen,
+  debug("PREVIEW PAGE LOADED", {
+    version: PREVIEW_VERSION,
+    company: companyRaw,
+    role: roleRaw,
+    ratingScore,
+    ratingRounds,
     hasTex: !!texString.trim(),
     hasPdf: !!pdfB64,
     hasPdfHumanized: !!pdfB64Humanized,
-    company,
-    role,
-    ratingScore,
-    ratingRounds,
   });
 });

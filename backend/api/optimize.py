@@ -810,6 +810,60 @@ def remove_one_achievement_bullet(tex_content: str) -> Tuple[str, bool]:
             return tex_content[:start] + new_sec + tex_content[end:], True
     log_event("ℹ️ [TRIM] No Achievements-like bullets found to remove.")
     return tex_content, False
+# ============================================================
+# 🔎 Coverage normalization helpers (LaTeX unescape + variants)
+# ============================================================
+
+_LATEX_UNESC = [
+    (r"\#", "#"), (r"\$", "$"), (r"\%", "%"), (r"\&", "&"),
+    (r"\_", "_"), (r"\/", "/"),
+]
+
+def _plain_text_for_coverage(tex: str) -> str:
+    """
+    Produce a plain, human-ish text for coverage matching:
+      - strip macros
+      - unescape common LaTeX sequences (C\\# -> C#, CI\\/CD -> CI/CD)
+      - collapse whitespace
+    """
+    s = strip_all_macros_keep_text(tex)
+    for a, b in _LATEX_UNESC:
+        s = s.replace(a, b)
+    # very common resume tokens:
+    s = s.replace("C\\#", "C#").replace("CI\\/CD", "CI/CD")
+    s = s.replace("A\\/B", "A/B").replace("R\\&D", "R&D")
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+# Map canonical token -> acceptable variant spellings for coverage only
+_VARIANTS = {
+    "kubernetes": ["k8s"],
+    "node.js": ["nodejs", "node js", "node"],
+    "ci/cd": ["ci cd", "ci-cd"],
+    "llms": ["llm", "large language models", "large-language models"],
+    "openai api": ["openai"],
+    "hugging face transformers": ["hf transformers", "transformers"],
+    "postgresql": ["postgres", "postgres sql"],
+    "c++": ["cpp"],
+    "c#": ["c sharp", "csharp"],
+    "sql": ["t-sql", "pl/sql", "ms sql", "postgres", "mysql"],
+    "bigquery": ["google bigquery", "big query"],
+}
+
+def _expand_variants(token: str) -> List[str]:
+    """
+    For a canonical token, return a set of variant strings to try when matching.
+    Includes punctuation-relaxed forms for robustness (e.g., 'nodejs' vs 'node.js').
+    """
+    t = canonicalize_token(token).lower().strip()
+    alts = _VARIANTS.get(t, [])
+    relaxed = {
+        t,
+        t.replace(".", ""),
+        t.replace("/", " "),
+        t.replace("-", " "),
+    }
+    return sorted({*alts, *relaxed})
 
 # ============================================================
 # 🧠 Main optimizer — Coursework + Skills + JD-retargeted bullets (High-Recall + Proactive)
@@ -972,29 +1026,54 @@ def _token_regex(token: str) -> re.Pattern:
     return re.compile(rf"(?<![a-z0-9]){t}(?![a-z0-9])", re.IGNORECASE)
 
 def _present_tokens_in_text(text_plain: str, tokens: Iterable[str]) -> Tuple[Set[str], Set[str]]:
+    """
+    Variant-aware presence check:
+      - expands each canonical token into acceptable variants
+      - matches using a relaxed boundary regex (_token_regex)
+    """
     present, missing = set(), set()
     low_text = text_plain.lower()
     for tok in {canonicalize_token(t).lower().strip() for t in tokens if str(t).strip()}:
-        if not tok:
-            continue
-        if _token_regex(tok).search(low_text):
-            present.add(tok)
-        else:
-            missing.add(tok)
+        hit = False
+        for v in _expand_variants(tok):
+            if _token_regex(v).search(low_text):
+                hit = True
+                break
+        (present if hit else missing).add(tok)
     return present, missing
+
+
+# ============================================================
+# 🪄 Coverage token filtering (skip soft/unwinnable items)
+# ============================================================
+
+_SKIP_PATTERNS = [
+    r"english\s*\(professional\)", r"chinese\s*\(professional\)",
+    r"\bcommunication\b", r"\bteamwork\b", r"\bcollaboration\b",
+    r"debugging workflows", r"strong interest", r"\bcuriosity\b",
+]
+
+def _is_coverage_token(tok: str) -> bool:
+    ls = canonicalize_token(tok).lower().strip()
+    return not any(re.search(p, ls) for p in _SKIP_PATTERNS)
 
 async def get_coverage_targets_from_jd(jd_text: str) -> List[str]:
     """
-    Use the JD extractor. 'protected' equals jd_keywords + requirements (canonical).
+    Build the set of tokens the score is based on, **excluding** soft/low-signal items.
+    Uses the protected set (jd_keywords + requirements) from the JD extractor.
     """
     _combined, protected = await extract_skills_gpt(jd_text)
-    return sorted(list({canonicalize_token(p).lower() for p in protected if p}))
+    kept = [t for t in protected if _is_coverage_token(t)]
+    return sorted(list({canonicalize_token(t).lower() for t in kept if t}))
+
 
 def compute_keyword_coverage(tex_content: str, tokens_for_coverage: List[str]) -> Dict[str, object]:
     """
-    Coverage over the whole (plain) resume text — includes Skills, Experience, etc.
+    Compute coverage over fully plain text derived from LaTeX:
+      - macros stripped
+      - common LaTeX escapes unescaped (so C#, CI/CD, R&D, A/B match)
     """
-    plain = strip_all_macros_keep_text(tex_content)
+    plain = _plain_text_for_coverage(tex_content)
     present, missing = _present_tokens_in_text(plain, tokens_for_coverage)
     total = max(1, len(set(tokens_for_coverage)))
     ratio = len(present) / total
@@ -1004,6 +1083,7 @@ def compute_keyword_coverage(tex_content: str, tokens_for_coverage: List[str]) -
         "missing": sorted(missing),
         "total": total
     }
+
 
 # ============================================================
 # ✍️ GPT step to weave in missing keywords (truthfully)
